@@ -1,0 +1,1945 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Healthcare System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+    <script src="https://cdn.botpress.cloud/webchat/v3.2/inject.js"></script>
+    <script>
+        window.botpressWebChat = {
+            init: {
+                botId: 'SE31JSLR', // Your bot ID
+                host: 'https://cdn.botpress.cloud/webchat', // default host
+                extraStyles: {
+                    '--bp-brand-color': '#5A67D8',
+                    '--bp-widget-button-icon': 'url(.png)'
+                }
+            }
+        }
+    </script>
+    <script src="https://files.bpcontent.cloud/2025/08/24/11/20250824112513-SE31JSLR.js" defer></script>
+
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #f0f4f8;
+        }
+
+        .main-content {
+            transition: margin-left 0.3s ease;
+        }
+
+        .sidebar {
+            width: 280px;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar a:hover {
+            background-color: #e2e8f0;
+        }
+
+        .quiz-container {
+            display: none;
+        }
+
+        .quiz-question {
+            margin-bottom: 1rem;
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+
+        .quiz-option {
+            background-color: #fff;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .quiz-option:hover {
+            background-color: #e2e8f0;
+            transform: translateY(-2px);
+        }
+
+        /* --- THEME-SPECIFIC SELECTION RULES --- */
+        #module-1-section .quiz-option.selected {
+            background-color: #bfdbfe;
+            border-color: #3b82f6;
+        }
+
+        #module-2-section .quiz-option.selected {
+            background-color: #bbf7d0;
+            border-color: #22c55e;
+        }
+
+        #module-3-section .quiz-option.selected {
+            background-color: #fed7aa;
+            border-color: #f97316;
+        }
+
+        #module-4-section .quiz-option.selected {
+            background-color: #c7d2fe;
+            border-color: #6366f1;
+        }
+
+        #module-5-section .quiz-option.selected {
+            background-color: #fecaca;
+            border-color: #ef4444;
+        }
+
+        #module-6-section .quiz-option.selected {
+            background-color: #e9d5ff;
+            border-color: #9333ea;
+        }
+
+        /* --- PROGRESS RING STYLES --- */
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .stroke-blue-500 {
+            stroke: #3b82f6;
+        }
+
+        .stroke-green-500 {
+            stroke: #22c55e;
+        }
+
+        .stroke-orange-500 {
+            stroke: #f97316;
+        }
+
+        .stroke-indigo-500 {
+            stroke: #6366f1;
+        }
+
+        .stroke-red-500 {
+            stroke: #ef4444;
+        }
+
+        .stroke-purple-500 {
+            stroke: #a855f7;
+        }
+
+        /* --- STYLES FOR SCATTERED CIRCLES --- */
+        /* --- NEW STYLES FOR GRID LAYOUT --- */
+        .progress-item-wrapper {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            border-radius: 0.75rem;
+            background-color: #ffffff;
+            /* Optional: give them a card background */
+            padding: 1rem;
+            /* Optional: add some padding */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            /* Optional: add a subtle shadow */
+        }
+
+        .progress-item-wrapper:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            z-index: 10;
+        }
+
+        
+
+        /* --- NEW: STYLES FOR PERMANENT DESKTOP SIDEBAR --- */
+        @media (min-width: 1024px) {
+
+            /* This targets desktop-sized screens */
+            #sidebar {
+                transform: translateX(0);
+                /* Makes the sidebar permanently visible */
+            }
+
+            #main-content {
+                margin-left: 280px;
+                /* Pushes the main content to the right */
+            }
+
+            #open-sidebar-btn,
+            #close-sidebar-btn {
+                display: none;
+                /* Hides the menu buttons on desktop, as they aren't needed */
+            }
+        }
+
+        .level-badge {
+            padding: 2px 10px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 8px;
+            color: white;
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-card {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            /* gray-200 */
+            border-radius: 1rem;
+            /* 16px */
+            padding: 1.25rem;
+            /* 20px */
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            /* Initial state for our load-in animation */
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .info-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-bar-container {
+            background-color: #f3f4f6;
+            /* gray-100 */
+            border-radius: 9999px;
+            height: 10px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 1s cubic-bezier(0.65, 0, 0.35, 1);
+            background-image: linear-gradient(to right, var(--tw-gradient-stops));
+        }
+
+        /* REPLACE previous module styles with this single class inside the <style> tag */
+        .module-select-card {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .chat-message {
+            opacity: 0;
+            transform: translateY(15px);
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-bubble {
+            max-width: 75%;
+        }
+
+        .chat-input-container {
+            border: 1px solid #e5e7eb;
+            /* gray-200 */
+            transition: all 0.2s ease;
+        }
+
+        .chat-input-container:focus-within {
+            border-color: #3b82f6;
+            /* blue-500 */
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .briefing-element {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: briefingFadeIn 0.5s ease forwards;
+        }
+
+        @keyframes briefingFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .contact-element {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: contactFadeIn 0.5s ease forwards;
+        }
+
+        @keyframes contactFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #contact-grid {
+            gap: 1rem;
+            /* This is 24px, equivalent to Tailwind's gap-6 */
+        }
+
+        .tab-button.active-tab {
+            color: #3b82f6;
+            /* Tailwind's blue-500 */
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 flex min-h-screen">
+    <div id="sidebar"
+        class="sidebar fixed top-0 left-0 h-full bg-white shadow-xl z-50 p-6 flex flex-col justify-between rounded-r-lg">
+        <div>
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">Menu</h2>
+                <button id="close-sidebar-btn" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <nav class="space-y-4">
+                <div id="auth-container" class="mb-4 p-3 border-b border-gray-200">
+                    <div id="user-info" class="hidden items-center">
+                        <p id="user-email" class="text-sm font-semibold text-gray-700 truncate"></p>
+                        <button onclick="logoutUser()"
+                            class="ml-auto text-sm bg-red-500 text-white font-bold py-1 px-3 rounded-full hover:bg-red-600">Logout</button>
+                    </div>
+                    <button id="login-btn" onclick="loginWithGoogle()"
+                        class="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="#FFC107"
+                                d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
+                            <path fill="#FF3D00"
+                                d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z" />
+                            <path fill="#4CAF50"
+                                d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.222 0-9.651-3.275-11.286-7.792l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
+                            <path fill="#1976D2"
+                                d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C42.028 36.313 44 31.134 44 24c0-1.341-.138-2.65-.389-3.917z" />
+                        </svg>
+                        Login with Google
+                    </button>
+                </div>
+                <a href="#"
+                    class="block text-gray-700 font-semibold text-lg hover:bg-gray-200 p-3 rounded-lg flex items-center active"
+                    onclick="showSection('main-home')">
+                    <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2-2m0 0l2 2m-2-2v10a1 1 0 01-1 1h-3m-6-10v10a1 1 0 001 1h2a1 1 0 001-1v-10m-2 2h2m-4 0h4">
+                        </path>
+                    </svg>
+                    Home
+                </a>
+                <a href="#"
+                    class="block text-gray-700 font-semibold text-lg hover:bg-gray-200 p-3 rounded-lg flex items-center active"
+                    onclick="showSection('home')">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2-2m0 0l2 2m-2-2v10a1 1 0 01-1 1h-3m-6-10v10a1 1 0 001 1h2a1 1 0 001-1v-10m-2 2h2m-4 0h4">
+                        </path>
+                    </svg>
+                    Dashboard
+                </a>
+
+                <a href="#"
+                    class="block text-gray-700 font-semibold text-lg hover:bg-gray-200 p-3 rounded-lg flex items-center"
+                    onclick="showSection('live-updates')">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                        </path>
+                    </svg>
+                    Community Updates
+                </a>
+
+                <div id="admin-link-container"></div>
+                <div id="ambulance-link-container"></div>
+            </nav>
+
+        </div>
+
+        <div>
+            <a href="#"
+                class="block text-gray-700 font-semibold text-lg p-3 rounded-lg flex items-center border-t border-gray-300 hover:bg-gray-200"
+                onclick="showSection('contact')">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                    </path>
+                </svg>
+                Contact Us
+            </a>
+        </div>
+    </div>
+
+    <div id="main-content" class="main-content flex-grow transition-all duration-300 p-4 sm:p-8">
+        <button id="open-sidebar-btn"
+            class="fixed top-4 left-4 z-50 p-2 bg-white rounded-full shadow-lg text-gray-700 hover:bg-gray-200 focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+            </svg>
+        </button>
+        <div id="main-home-section" class="content-section rounded-xl bg-white p-8 shadow-md">
+            <div class="text-center py-12">
+                <h1
+                    class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-6">
+                    City Emergency Health Hub
+                </h1>
+                <p class="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
+                    Your central dashboard for real-time hospital bed tracking, emergency ambulance routing, and
+                    critical health resources.
+                </p>
+                <div class="mt-4 mb-16 text-center">
+                    <button onclick="triggerSOS()"
+                        class="relative group bg-red-600 text-white font-black py-6 px-12 rounded-full text-3xl sm:text-4xl shadow-[0_0_30px_rgba(220,38,38,0.6)] hover:shadow-[0_0_60px_rgba(220,38,38,0.9)] transition-all duration-300 transform hover:scale-105 animate-pulse">
+                        🚨 SOS EMERGENCY 🚨
+                        <div
+                            class="absolute inset-0 border-4 border-red-500 rounded-full scale-110 opacity-0 group-hover:animate-ping">
+                        </div>
+                    </button>
+                    <p class="text-red-500 mt-4 font-bold tracking-wide uppercase text-sm">Instantly dispatches
+                        ambulance to the least crowded hospital</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                    <div onclick="showSection('home')"
+                        class="bg-blue-50 border border-blue-200 p-8 rounded-2xl cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all">
+                        <div class="text-4xl mb-4">🛏️</div>
+                        <h3 class="text-xl font-bold text-blue-800 mb-2">Find a Bed</h3>
+                        <p class="text-blue-600 text-sm">Check real-time ICU and General bed availability across the
+                            city.</p>
+                    </div>
+                    <div onclick="showSection('live-updates')"
+                        class="bg-green-50 border border-green-200 p-8 rounded-2xl cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all">
+                        <div class="text-4xl mb-4">🚑</div>
+                        <h3 class="text-xl font-bold text-green-800 mb-2">Emergency Contacts</h3>
+                        <p class="text-green-600 text-sm">Quick access to ambulance dispatch and fire department
+                            numbers.</p>
+                    </div>
+                </div>
+                <div
+                    class="mt-12 bg-white rounded-2xl shadow-[0_0_20px_rgba(0,0,0,0.05)] border border-gray-100 p-8 max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-8">
+                    <div class="w-full md:w-1/2 text-left">
+                        <span
+                            class="bg-indigo-100 text-indigo-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">Live
+                            Telemetry</span>
+                        <h3 class="text-3xl font-black text-gray-800 mt-3 mb-2">City Bed Capacity</h3>
+                        <p class="text-gray-500 mb-6">Real-time aggregation of all active hospitals in the network.
+                            Updates instantly via Firebase WebSocket.</p>
+
+                        <div class="flex gap-6">
+                            <div>
+                                <p class="text-xs font-bold text-gray-400 uppercase">Total Gen Beds</p>
+                                <p id="stat-gen-beds" class="text-3xl font-black text-blue-500">0</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-gray-400 uppercase">Total ICU Beds</p>
+                                <p id="stat-icu-beds" class="text-3xl font-black text-red-500">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-full md:w-1/2 relative h-[250px] flex justify-center">
+                        <canvas id="cityCapacityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex flex-col lg:flex-row gap-8">
+            <div class="flex-grow">
+                <div id="home-section" class="content-section rounded-xl bg-white p-8 shadow-md">
+                    <h1
+                        class="text-5xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-blue-600 mb-4">
+                        Live Hospital Resource Tracker
+                    </h1>
+                    <p class="text-lg text-gray-600 text-center mb-12">
+                        Real-time availability of ICU beds, ventilators, and emergency ambulances across the city.
+                    </p>
+
+                    <div class="mb-12 bg-white border border-gray-200 p-6 rounded-lg shadow-sm">
+                        <div class="flex items-center mb-3">
+                            <svg class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <h3 class="ml-3 text-2xl font-bold text-gray-800">Critical Alerts</h3>
+                        </div>
+                        <div id="rotating-tip-container" class="relative h-12">
+                            <p id="safety-tip-text"
+                                class="absolute w-full text-lg text-red-600 font-semibold transition-opacity duration-500 ease-in-out opacity-0">
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center mb-6 border-b pb-2">
+                        <h2 class="text-3xl font-bold text-gray-800">Available Hospitals</h2>
+                        <span
+                            class="bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span> Live Updates
+                        </span>
+                    </div>
+
+                    <div id="patient-hospitals-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <p class="text-gray-500 col-span-3 text-center py-8">Fetching live hospital data...</p>
+                    </div>
+                </div>
+
+
+            </div>
+
+            <div id="queries-section" class="content-section hidden rounded-xl bg-white p-8 shadow-md mt-8">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Queries</h2>
+                <p class="text-gray-600">This section is for the user's queries to get resolved. *(Feature
+                    requires
+                    a backend service to be fully functional.)*</p>
+            </div>
+            <div id="live-updates-section" class="content-section hidden rounded-xl bg-white p-8 shadow-md mt-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-2">Community Updates</h2>
+                    <p class="text-lg text-gray-500">Share real-time information and stay connected.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div
+                        class="lg:col-span-2 bg-white rounded-2xl border border-gray-200 shadow-lg p-6 flex flex-col h-[70vh]">
+                        <div id="messages-container" class="flex-grow overflow-y-auto pr-4 space-y-6">
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t">
+                            <div class="chat-input-container bg-white rounded-full p-2 flex items-center shadow-md">
+                                <select id="voice-lang-select"
+                                    class="text-xs bg-transparent border-none focus:ring-0 text-gray-500 ml-2">
+                                    <option value="en-US">English</option>
+                                    <option value="hi-IN">हिन्दी (Hindi)</option>
+                                    <option value="mr-IN">मराठी (Marathi)</option>
+                                    <option value="ta-IN">தமிழ் (Tamil)</option>
+                                    <option value="bn-IN">বাংলা (Bengali)</option>
+                                </select>
+
+                                <input type="text" id="message-input" placeholder="Type or Speak..."
+                                    class="flex-grow bg-transparent border-0 focus:ring-0 px-4">
+
+                                <button id="voice-btn" type="button"
+                                    class="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-red-500 transition-colors mr-1">
+                                    <svg id="mic-icon" class="w-6 h-6" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z">
+                                        </path>
+                                    </svg>
+                                </button>
+
+                                <button onclick="sendMessage()"
+                                    class="w-10 h-10 bg-blue-500 rounded-full text-white flex-shrink-0 flex items-center justify-center hover:bg-blue-600 transition-colors">
+                                    <svg class="w-6 h-6 transform rotate-90" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-1">
+                        <div class="bg-white rounded-2xl border border-gray-200 shadow-lg p-6 mb-8">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Community Guidelines</h3>
+                            <ul class="space-y-3 text-gray-600">
+                                <li class="flex items-start"><span class="mr-2 mt-1">✅</span> Be respectful and
+                                    constructive.</li>
+                                <li class="flex items-start"><span class="mr-2 mt-1">📢</span> Share only verified
+                                    information.</li>
+                                <li class="flex items-start"><span class="mr-2 mt-1">📍</span> Provide clear
+                                    locations if reporting an event.</li>
+                                <li class="flex items-start"><span class="mr-2 mt-1">🤝</span> Offer help and
+                                    support to others.</li>
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div id="admin-panel-section" class="content-section hidden rounded-xl bg-white p-8 shadow-md mt-8">
+                <div
+                    class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 mb-6 gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold text-indigo-800">Hospital Admin Portal</h2>
+                        <p class="text-sm text-gray-600 mt-1">Update bed and ventilator availability. Changes reflect
+                            instantly to patients.</p>
+                    </div>
+                    <button onclick="seedInitialHospitals()"
+                        class="bg-gray-800 text-white font-bold px-4 py-2 rounded-lg hover:bg-gray-900 transition shadow-md whitespace-nowrap">
+                        Initialize DB (Run Once)
+                    </button>
+                </div>
+                <div class="bg-indigo-50 border border-indigo-200 p-6 rounded-lg shadow-sm mb-8">
+                    <h3 class="text-xl font-bold text-indigo-800 mb-4">Register New Hospital</h3>
+                    <form id="add-hospital-form" onsubmit="addNewHospital(event)"
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="flex flex-col">
+                            <label class="text-xs font-semibold text-gray-600">Hospital Name</label>
+                            <input type="text" id="new-hosp-name" required placeholder="e.g. City Care"
+                                class="p-2 border rounded focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-xs font-semibold text-gray-600">Location</label>
+                            <input type="text" id="new-hosp-loc" required placeholder="e.g. West Wing"
+                                class="p-2 border rounded focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-xs font-semibold text-gray-600">Emergency Phone</label>
+                            <input type="text" id="new-hosp-phone" required placeholder="e.g. 102"
+                                class="p-2 border rounded focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-xs font-semibold text-gray-600">Admin Email (Owner)</label>
+                            <input type="email" id="new-hosp-email" required placeholder="doctor@hospital.com"
+                                class="p-2 border rounded focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-xs font-semibold text-gray-600">General Beds</label>
+                            <input type="number" id="new-hosp-gen" required min="0" value="0"
+                                class="p-2 border rounded focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-xs font-semibold text-gray-600">ICU Beds</label>
+                            <input type="number" id="new-hosp-icu" required min="0" value="0"
+                                class="p-2 border rounded focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-xs font-semibold text-gray-600">Ventilators</label>
+                            <input type="number" id="new-hosp-vent" required min="0" value="0"
+                                class="p-2 border rounded focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                        <div class="flex flex-col justify-end">
+                            <button type="submit"
+                                class="bg-indigo-600 text-white font-bold py-2 px-4 rounded hover:bg-indigo-700 transition">
+                                + Add to Network
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div id="admin-hospitals-container" class="space-y-6">
+                    <p class="text-gray-500 text-center py-8">Loading hospital management tools...</p>
+                </div>
+            </div>
+
+            <div id="ambulance-panel-section" class="content-section hidden rounded-xl bg-gray-50 p-8 shadow-md mt-8">
+                <div class="flex justify-between items-center border-b border-gray-300 pb-4 mb-6">
+                    <div>
+                        <h2 class="text-3xl font-black text-red-700 tracking-tight">🚑 AMBULANCE COMMAND</h2>
+                        <p class="text-sm text-gray-600 font-bold mt-1">SECURE NETWORK | AUTHORIZED:
+                            sakibtamboli245@gmail.com</p>
+                    </div>
+                    <div class="bg-red-600 text-white px-4 py-2 rounded-full font-bold animate-pulse">
+                        LIVE DISPATCH
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="space-y-6">
+                        <div class="bg-white border-2 border-red-100 p-6 rounded-xl shadow-sm">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Driver Profile</h3>
+                            <div class="flex items-center gap-4 mb-4">
+                                <div
+                                    class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-2xl font-bold text-red-600">
+                                    ST</div>
+                                <div>
+                                    <p class="font-bold text-lg">Sakib Tamboli</p>
+                                    <p class="text-sm text-gray-500 font-mono">ID: MH-12-EM-9999</p>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-600"><strong>Vehicle Type:</strong> Advanced Life Support (ALS)
+                            </p>
+                            <p class="text-sm text-gray-600"><strong>Status:</strong> <span
+                                    class="text-green-600 font-bold">● Active / On Duty</span></p>
+                        </div>
+
+                        <div class="bg-white border-2 border-red-100 p-6 rounded-xl shadow-sm">
+                            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                                <h3 class="text-lg font-bold text-gray-800">Patient Vitals</h3>
+                                <span class="text-xs font-bold text-red-500 animate-pulse">● RECORDING</span>
+                            </div>
+                            <div
+                                class="bg-black rounded-lg p-3 mb-4 border-2 border-gray-800 relative overflow-hidden h-32 w-full shadow-inner">
+                                <div class="absolute top-2 left-2 text-green-500 font-mono text-xs opacity-70">ECG II -
+                                    LEAD V</div>
+                                <div id="ecg-bpm-display"
+                                    class="absolute top-2 right-2 text-green-500 font-mono text-xl animate-pulse tracking-widest">
+                                    -- BPM</div>
+                                <canvas id="ecg-canvas" class="w-full h-full"></canvas>
+                                <div class="absolute inset-0 pointer-events-none"
+                                    style="background: linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 5%, rgba(0,0,0,0) 95%, rgba(0,0,0,1) 100%);">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500">Heart Rate (bpm)</label>
+                                    <input type="number" id="vital-hr"
+                                        class="w-full p-2 border-2 border-gray-200 rounded text-lg font-bold text-red-600 focus:border-red-500"
+                                        placeholder="--">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500">SpO2 (%)</label>
+                                    <input type="number" id="vital-spo2"
+                                        class="w-full p-2 border-2 border-gray-200 rounded text-lg font-bold text-blue-600 focus:border-red-500"
+                                        placeholder="--">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500">Blood Pressure</label>
+                                    <input type="text" id="vital-bp"
+                                        class="w-full p-2 border-2 border-gray-200 rounded font-bold text-gray-700 focus:border-red-500"
+                                        placeholder="120/80">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-gray-500">Temp (°F)</label>
+                                    <input type="number" id="vital-temp"
+                                        class="w-full p-2 border-2 border-gray-200 rounded font-bold text-gray-700 focus:border-red-500"
+                                        placeholder="98.6">
+                                </div>
+                            </div>
+                            <button onclick="syncVitals()"
+                                class="mt-6 w-full bg-red-600 text-white font-black py-3 rounded-lg hover:bg-red-700 transition shadow-lg">
+                                TRANSMIT VITALS TO HOSPITAL
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="bg-white border-2 border-red-100 p-6 rounded-xl shadow-sm h-[300px] flex flex-col">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="text-lg font-bold text-gray-800">Live Routing (Pune)</h3>
+                                <button onclick="startLiveRoute(event)"
+                                    class="bg-yellow-500 text-white text-sm font-bold px-4 py-1 rounded shadow hover:bg-yellow-600 transition animate-pulse">
+                                    Start GPS Route 📍
+                                </button>
+                            </div>
+                            <div id="ambulance-map" style="min-height: 250px; height: 100%; width: 100%;"
+                                class="rounded-lg border-2 border-gray-300 z-10 relative"></div>
+                        </div>
+
+                        <div
+                            class="bg-gray-900 p-6 rounded-xl shadow-sm h-[320px] flex flex-col border-2 border-gray-800">
+                            <h3 class="text-lg font-bold text-red-500 mb-2">Direct Comm (Hospital)</h3>
+                            <div id="amb-messenger"
+                                class="flex-grow bg-gray-800 p-3 rounded-lg mb-4 overflow-y-auto space-y-2 border border-gray-700">
+                                <p
+                                    class="text-xs text-green-400 font-mono text-center border-b border-gray-700 pb-2 mb-2">
+                                    Secure Channel Established</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="text" id="amb-chat-input"
+                                    class="flex-grow p-2 bg-gray-700 border-0 rounded text-white font-mono focus:ring-1 focus:ring-red-500"
+                                    placeholder="Enter status update...">
+                                <button onclick="sendAmbMessage()"
+                                    class="bg-red-600 text-white px-4 py-2 rounded font-bold hover:bg-red-700">SEND</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border-2 border-red-100 p-6 rounded-xl shadow-sm h-[644px] flex flex-col">
+                        <h3 class="text-lg font-bold text-gray-800 mb-2 border-b pb-2">Hospital Network Status</h3>
+                        <p class="text-xs text-gray-500 mb-4">Live capacities for dispatch coordination.</p>
+                        <div id="ambulance-hospitals-container" class="flex-grow overflow-y-auto space-y-4 pr-2">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="contact-section" class="content-section hidden rounded-xl bg-white p-8 shadow-md mt-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-2">Get in Touch</h2>
+                    <p class="text-lg text-gray-500">We'd love to hear from you. Reach out with any questions or
+                        feedback.</p>
+                </div>
+
+                <div id="contact-grid" class="grid grid-cols-1 md:grid-cols-2 gap-12" style="gap: 1rem;">
+                    <div class="contact-element">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6">Contact Information</h3>
+                        <div class="space-y-6">
+                            <div class="flex items-start">
+                                <div
+                                    class="flex-shrink-0 w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <h4 class="text-lg font-semibold text-gray-700">Email</h4>
+                                    <p class="text-gray-600">contact@disasterhub.com</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div
+                                    class="flex-shrink-0 w-12 h-12 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <h4 class="text-lg font-semibold text-gray-700">Phone</h4>
+                                    <p class="text-gray-600">+91 98765 43210</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div
+                                    class="flex-shrink-0 w-12 h-12 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <h4 class="text-lg font-semibold text-gray-700">Address</h4>
+                                    <p class="text-gray-600">ABC College, XYZ City</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="contact-element" style="animation-delay: 0.1s;">
+                        <div class="bg-gray-50 rounded-2xl p-8 border">
+                            <form id="contact-form" onsubmit="handleSendMessage(event)" class="space-y-4">
+                                <div>
+                                    <label for="name" class="font-semibold text-gray-700">Full Name</label>
+                                    <input type="text" id="name" required
+                                        class="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label for="email" class="font-semibold text-gray-700">Email</label>
+                                    <input type="email" id="email" required
+                                        class="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label for="message" class="font-semibold text-gray-700">Message</label>
+                                    <textarea id="message" rows="4" required
+                                        class="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                                </div>
+                                <button type="submit"
+                                    class="w-full bg-blue-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-600 transition-colors">
+                                    Send Message
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    </div>
+    <div id="sos-modal"
+        class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center p-4 z-[200] hidden backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 text-center transform scale-100">
+
+            <div id="sos-loading">
+                <div class="relative w-24 h-24 mx-auto mb-6">
+                    <div class="absolute inset-0 border-t-4 border-red-600 rounded-full animate-spin"></div>
+                    <div class="absolute inset-2 border-r-4 border-blue-600 rounded-full animate-spin direction-reverse"
+                        style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-3xl">📡</div>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 animate-pulse">Dispatching Ambulance...</h2>
+                <p class="text-gray-600 mt-3 font-medium">Calculating route to the nearest hospital with available
+                    beds...</p>
+            </div>
+
+            <div id="sos-success" class="hidden">
+                <div class="text-7xl mb-4 animate-bounce">🚑</div>
+                <h2 class="text-3xl font-black text-green-600 mb-2">Ambulance Dispatched!</h2>
+                <div class="bg-gray-50 border-2 border-gray-200 rounded-xl p-6 my-6 shadow-inner">
+                    <p class="text-sm text-gray-500 font-bold uppercase mb-1">Routing to</p>
+                    <p id="sos-hospital-name" class="text-2xl font-black text-indigo-700 leading-tight">...</p>
+                    <div
+                        class="mt-4 inline-block bg-green-100 text-green-800 text-sm font-bold px-4 py-2 rounded-full border border-green-300">
+                        ✅ 1 Emergency Bed Reserved
+                    </div>
+                </div>
+                <button onclick="closeSOS()"
+                    class="w-full bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-black transition-colors shadow-lg text-lg">Close
+                    Tracking</button>
+            </div>
+
+            <div id="sos-fail" class="hidden">
+                <div class="text-7xl mb-4">⚠️</div>
+                <h2 class="text-3xl font-black text-red-600 mb-2">Network at Capacity</h2>
+                <p class="text-gray-700 mb-6 font-medium">All hospitals in the network are currently full. Please call
+                    102 immediately for manual intervention.</p>
+                <a href="tel:102"
+                    class="block w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 transition-colors shadow-lg text-lg mb-3">Call
+                    102 Now</a>
+                <button onclick="closeSOS()"
+                    class="w-full bg-gray-200 text-gray-800 font-bold py-3 rounded-xl hover:bg-gray-300">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // --- START OF COMPLETE SCRIPT ---
+
+        // 1. Initialize Firebase
+        // PASTE YOUR FIREBASE CONFIG OBJECT HERE
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyB58DDP4gaoz47b8g8UQgaboJ1fhfJvsfU",
+            authDomain: "disaster-hub-cc4af.firebaseapp.com",
+            projectId: "disaster-hub-cc4af",
+            storageBucket: "disaster-hub-cc4af.firebasestorage.app",
+            messagingSenderId: "9396233266",
+            appId: "1:9396233266:web:6b5741c9bd7dc7ddd0c82b",
+            measurementId: "G-QW6J6R6581"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+        let currentUser = null; // Variable to hold the current user object
+
+        const adminEmails = ['piyushdinkar7595@gmail.com', 'sinhakhushi268@gmail.com'];
+        const ambulanceAdmins = ['sakibtamboli245@gmail.com', 'piyushdinkar7595@gmail.com'];
+        let capacityChart = null;
+
+        function loginWithGoogle() {
+            auth.signInWithPopup(googleProvider)
+                .catch((error) => {
+                    console.error("Error during sign-in:", error);
+                    alert("Could not log in. Please try again.");
+                });
+        }
+
+        function logoutUser() {
+            auth.signOut();
+        }
+
+        auth.onAuthStateChanged(user => {
+            const userInfoDiv = document.getElementById('user-info');
+            const userEmailP = document.getElementById('user-email');
+            const loginBtn = document.getElementById('login-btn');
+            const adminLinkContainer = document.getElementById('admin-link-container');
+            const ambulanceLinkContainer = document.getElementById('ambulance-link-container');
+
+
+            if (adminLinkContainer) adminLinkContainer.innerHTML = '';
+            if (ambulanceLinkContainer) ambulanceLinkContainer.innerHTML = '';
+
+            if (user) {
+                currentUser = user;
+                if (userInfoDiv) {
+                    userInfoDiv.classList.remove('hidden');
+                    userInfoDiv.classList.add('flex');
+                }
+                if (loginBtn) loginBtn.classList.add('hidden');
+                if (userEmailP) userEmailP.textContent = user.email;
+
+                // CHECK IF USER IS REGULAR ADMIN
+                if (adminEmails.includes(user.email) && adminLinkContainer) {
+                    adminLinkContainer.innerHTML = `
+                <a href="#" 
+                   onclick="showSection('admin-panel')"
+                   class="block text-indigo-700 font-bold text-lg hover:bg-indigo-100 p-3 rounded-lg flex items-center mt-4 border-t-2 border-indigo-200">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m12 0v-2a4 4 0 00-4-4h-1.333a4 4 0 00-3.92 5.333M15 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    Hospital Admin Panel
+                </a>`;
+                }
+
+                // CHECK IF USER IS AMBULANCE ADMIN
+                if (ambulanceAdmins.includes(user.email) && ambulanceLinkContainer) {
+                    ambulanceLinkContainer.innerHTML = `
+                <a href="#" 
+                   onclick="showSection('ambulance-panel')"
+                   class="block text-red-700 font-bold text-lg hover:bg-red-100 p-3 rounded-lg flex items-center mt-4 border-t-2 border-red-200">
+                    <span class="text-2xl mr-2">🚑</span>
+                  Ambulance Panel
+                </a>`;
+                    listenToAmbulanceChat();
+                }
+
+            } else {
+                currentUser = null;
+                if (userInfoDiv) {
+                    userInfoDiv.classList.add('hidden');
+                    userInfoDiv.classList.remove('flex');
+                }
+                if (loginBtn) loginBtn.classList.remove('hidden');
+                if (userEmailP) userEmailP.textContent = '';
+            }
+        });
+
+
+        // --- DOM Element Variables ---
+        const openSidebarBtn = document.getElementById('open-sidebar-btn');
+        const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const moduleLinks = document.querySelectorAll('.module-link-btn');
+        const contentSections = document.querySelectorAll('.content-section');
+        const navLinks = document.querySelectorAll('nav a');
+        const moduleNames = ["Earthquake", "Flood", "Fire", "Hurricane", "Tornado", "Tsunami"];
+        const themeColors = ['blue-500', 'green-500', 'orange-500', 'indigo-500', 'red-500', 'purple-500'];
+
+        // CORRECTED: Simplified for permanent desktop sidebar
+        function toggleSidebar() {
+            sidebar.classList.toggle('open');
+        }
+
+        openSidebarBtn.addEventListener('click', toggleSidebar);
+        closeSidebarBtn.addEventListener('click', toggleSidebar);
+
+        // CORRECTED: Cleaned up to prevent animation conflicts
+        // CORRECTED: This version restores the logic to reload scores and trigger the animation.
+        function showSection(sectionId) {
+            if (unsubscribeFromMessages) {
+                unsubscribeFromMessages();
+                unsubscribeFromMessages = null;
+            }
+
+            contentSections.forEach(section => {
+                section.classList.add('hidden');
+            });
+
+            const currentSection = document.getElementById(sectionId + '-section');
+            if (currentSection) {
+                currentSection.classList.remove('hidden');
+            }
+            // Initialize the map when the ambulance panel is opened
+            if (sectionId === 'ambulance-panel') {
+                setTimeout(() => {
+                    initAmbulanceMap();
+                    initECG();
+                }, 200); // Small delay allows the HTML div to render first
+            }
+
+            if (sectionId === 'live-updates') {
+                listenForMessages();
+            }
+
+            navLinks.forEach(link => {
+                link.classList.remove('active', 'bg-gray-200');
+                if (link.getAttribute('onclick') === `showSection('${sectionId}')`) {
+                    link.classList.add('active', 'bg-gray-200');
+                }
+            });
+
+            if (sidebar.classList.contains('open')) {
+                // Only toggle for mobile view, which is handled by the 'open' class
+                const isDesktop = window.innerWidth >= 1024;
+                if (!isDesktop) {
+                    toggleSidebar();
+                }
+            }
+        }
+
+        moduleLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const target = e.currentTarget.dataset.target;
+                showSection(target);
+            });
+        });
+
+        document.querySelectorAll('.quiz-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                const selectedOption = e.target;
+                const optionsContainer = selectedOption.parentNode;
+                optionsContainer.querySelectorAll('.quiz-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                selectedOption.classList.add('selected');
+            });
+        });
+
+
+        // --- Real-time Chat Functions ---
+        function sendMessage() {
+            const messageInput = document.getElementById('message-input');
+            const messageText = messageInput.value.trim();
+
+            if (!currentUser) {
+                alert("Please log in with Google to send a message.");
+                return;
+            }
+
+            if (messageText === "") {
+                alert("Message cannot be empty.");
+                return;
+            }
+
+            db.collection('messages').add({
+                text: messageText,
+                author: currentUser.email,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                messageInput.value = '';
+            }).catch(error => {
+                console.error("Error sending message: ", error);
+                alert("Could not send message. Please try again.");
+            });
+        }
+
+        let unsubscribeFromMessages = null;
+
+        // ADD this new helper function to your script
+        function generateAvatar(email) {
+            if (!email) email = '??';
+            // This now takes only the first letter for the avatar
+            const initials = email.charAt(0).toUpperCase();
+            let hash = 0;
+            for (let i = 0; i < email.length; i++) {
+                hash = email.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const colors = ['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500'];
+            const color = colors[Math.abs(hash) % colors.length];
+            return `<div class="w-10 h-10 rounded-full ${color} flex items-center justify-center font-bold text-white flex-shrink-0 text-lg">${initials}</div>`;
+        }
+
+        // REPLACE your entire existing listenForMessages function with this one
+        function listenForMessages() {
+            const messagesContainer = document.getElementById('messages-container');
+            const query = db.collection('messages').orderBy('timestamp', 'asc').limit(50);
+
+            unsubscribeFromMessages = query.onSnapshot(snapshot => {
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === "added") {
+                        const message = change.doc.data();
+                        const messageElement = document.createElement('div');
+                        messageElement.classList.add('chat-message');
+
+                        const date = message.timestamp ? message.timestamp.toDate() : new Date();
+                        const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                        const avatarHTML = generateAvatar(message.author);
+
+                        // === This is the change ===
+                        // We now get only the first letter of the email to display
+                        const displayName = message.author.charAt(0).toUpperCase();
+
+                        if (currentUser && message.author === currentUser.email) {
+                            // User's own message (align right)
+                            messageElement.classList.add('flex', 'items-end', 'justify-end');
+                            messageElement.innerHTML = `
+                        <div class="chat-bubble order-1">
+                            <div class="px-4 py-2 rounded-2xl bg-blue-500 text-white">
+                                <p>${message.text}</p>
+                            </div>
+                            <p class="text-xs text-gray-400 text-right mt-1">${timeString}</p>
+                        </div>
+                        <div class="order-2 ml-3">${avatarHTML}</div>
+                    `;
+                        } else {
+                            // Other users' messages (align left)
+                            messageElement.classList.add('flex', 'items-end');
+                            messageElement.innerHTML = `
+                        <div class="order-1 mr-3">${avatarHTML}</div>
+                        <div class="chat-bubble order-2">
+                            <div class="px-4 py-2 rounded-2xl bg-gray-200 text-gray-800">
+                                <p class="font-semibold text-sm">${displayName}</p>
+                                <p>${message.text}</p>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1">${timeString}</p>
+                        </div>
+                    `;
+                        }
+                        messagesContainer.appendChild(messageElement);
+                    }
+                });
+                // Auto-scroll to the latest message
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const tips = [
+                "🚨 Metro Care ICU is currently operating at full capacity. Please reroute critical patients to Sunrise Health Clinic.",
+                "🚑 3 Advanced Life Support (ALS) ambulances are currently available in the Downtown Area.",
+                "💡 Always bring the patient's ID and previous medical records for faster admission.",
+                "🏥 City General Hospital has just freed up 5 new Ventilator units.",
+                "📞 In case of a life-threatening emergency, always dial 102 immediately."
+            ];
+            const tipElement = document.getElementById('safety-tip-text');
+            let currentTipIndex = 0;
+
+            if (tipElement) {
+                function rotateTip() {
+                    // Fade out the current tip
+                    tipElement.classList.remove('opacity-100');
+                    tipElement.classList.add('opacity-0');
+
+                    // After the fade-out transition ends, change the text and fade it back in
+                    setTimeout(() => {
+                        // Move to the next tip, looping back to the start if necessary
+                        currentTipIndex = (currentTipIndex + 1) % tips.length;
+                        tipElement.textContent = tips[currentTipIndex];
+
+                        // Fade in the new tip
+                        tipElement.classList.remove('opacity-0');
+                        tipElement.classList.add('opacity-100');
+                    }, 500); // This delay should match the transition duration
+                }
+
+                // Display the first tip immediately without delay
+                tipElement.textContent = tips[currentTipIndex];
+                tipElement.classList.remove('opacity-0');
+                tipElement.classList.add('opacity-100');
+
+                // Set the interval to rotate the tips every 5 seconds
+                setInterval(rotateTip, 5000);
+            }
+        });
+        // --- END: Rotating Safety Tip Logic ---
+
+        const messageInput = document.getElementById('message-input');
+
+        if (messageInput) {
+            messageInput.addEventListener('keydown', function (event) {
+                // Check if the key pressed was 'Enter'
+                if (event.key === 'Enter') {
+                    // Prevent the default browser action (like adding a new line)
+                    event.preventDefault();
+
+                    // Trigger the existing sendMessage function
+                    sendMessage();
+                }
+            });
+        }
+        function handleSendMessage(event) {
+            event.preventDefault(); // Prevents the page from reloading
+
+            // Get the values from the form fields
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const message = document.getElementById('message').value.trim();
+
+            // The 'required' attribute on your HTML inputs handles validation,
+            // but this is an extra check.
+            if (!name || !email || !message) {
+                alert('Please fill out all fields.');
+                return;
+            }
+
+            // Use the 'db' instance you already initialized for Firestore
+            db.collection('contactSubmissions').add({
+                name: name,
+                email: email,
+                message: message,
+                submittedAt: firebase.firestore.FieldValue.serverTimestamp() // Adds a server timestamp
+            })
+                .then(() => {
+                    alert('Thank you! Your message has been sent successfully.');
+                    document.getElementById('contact-form').reset(); // Clears the form on success
+                })
+                .catch((error) => {
+                    console.error("Error sending message: ", error);
+                    alert('Sorry, something went wrong. Please try again later.');
+                });
+        }
+        // --- HOSPITAL REAL-TIME DASHBOARD LOGIC ---
+
+        // 1. Run this once to populate your Firestore with the initial hospitals
+        // 1. Run this once to populate your Firestore with the initial hospitals
+        function seedInitialHospitals() {
+            const hospitals = [
+                {
+                    id: 'h1', name: 'City General Hospital', location: 'Downtown Area', phone: '102',
+                    generalBeds: 45, icuBeds: 5, ventilators: 12,
+                    adminEmail: 'piyushdinkar7595@gmail.com' // YOUR EMAIL OWNS THIS HOSPITAL
+                }
+            ];
+
+            hospitals.forEach(hosp => {
+                db.collection('hospitals').doc(hosp.id).set(hosp)
+                    .then(() => console.log(`Seeded ${hosp.name}`))
+                    .catch(err => console.error("Error seeding: ", err));
+            });
+            alert("Database initialized! The dashboard should now populate.");
+        }
+
+        // 2. Listen to Firestore in Real-Time
+        // 2. Listen to Firestore in Real-Time
+        function listenToHospitalUpdates() {
+            db.collection('hospitals').onSnapshot((snapshot) => {
+                const patientGrid = document.getElementById('patient-hospitals-grid');
+                const adminContainer = document.getElementById('admin-hospitals-container');
+                const ambulanceContainer = document.getElementById('ambulance-hospitals-container');
+
+                if (patientGrid) patientGrid.innerHTML = '';
+                if (adminContainer) adminContainer.innerHTML = '';
+                if (ambulanceContainer) ambulanceContainer.innerHTML = '';
+
+                // Analytics Counters
+                let totalGenBeds = 0;
+                let totalIcuBeds = 0;
+
+                snapshot.forEach((doc) => {
+                    const h = doc.data();
+                    const id = doc.id;
+
+                    // Add to our total analytics count
+                    totalGenBeds += (h.generalBeds || 0);
+                    totalIcuBeds += (h.icuBeds || 0);
+
+                    const isFull = h.icuBeds === 0 && h.generalBeds === 0;
+                    const cardBorder = isFull ? 'border-red-500' : 'border-green-500';
+                    const btnClass = isFull
+                        ? 'bg-red-100 text-red-600 border border-red-200 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md';
+                    const btnText = isFull ? 'Hospital Full - Reroute' : 'Book Emergency Bed';
+
+                    // --- PATIENT CARD ---
+                    if (patientGrid) {
+                        patientGrid.innerHTML += `
+                        <div class="bg-gray-50 p-6 rounded-lg border-t-4 ${cardBorder} shadow-sm transition-all duration-300">
+                            <h3 class="text-xl font-bold text-gray-800 mb-1">${h.name}</h3>
+                            <p class="text-sm text-gray-500 mb-4 flex items-center">
+                                <span class="mr-2">📍 ${h.location}</span> | <span class="ml-2">📞 ${h.phone}</span>
+                            </p>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center border-b border-gray-200 pb-1">
+                                    <span class="text-gray-700 font-medium">General Beds</span> 
+                                    <span class="font-bold ${h.generalBeds > 5 ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'} px-3 py-1 rounded-full text-sm">${h.generalBeds} Available</span>
+                                </div>
+                                <div class="flex justify-between items-center border-b border-gray-200 pb-1">
+                                    <span class="text-gray-700 font-medium">ICU Beds</span> 
+                                    <span class="font-bold ${h.icuBeds > 2 ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'} px-3 py-1 rounded-full text-sm">${h.icuBeds} Available</span>
+                                </div>
+                            </div>
+                        </div>`;
+                    }
+
+                    // --- ADMIN CARD ---
+                    if (adminContainer && currentUser && h.adminEmail === currentUser.email) {
+                        const sosAlertHTML = h.incomingSOS > 0 ? `
+                        <div class="bg-red-100 border-2 border-red-500 text-red-800 p-4 rounded-lg mb-4 flex justify-between animate-pulse shadow-md">
+                            <div><h4 class="font-black text-lg">🚑 INCOMING EMERGENCY</h4></div>
+                            <button onclick="acknowledgeSOS('${id}')" class="bg-red-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-red-700">Acknowledge</button>
+                        </div>` : '';
+
+                        adminContainer.innerHTML += `
+                        <div class="bg-white border border-indigo-100 p-6 rounded-lg shadow-sm mb-4">
+                            ${sosAlertHTML}
+                            <h3 class="font-bold text-lg mb-2">${h.name}</h3>
+                            Gen: <input type="number" id="${id}-gen" value="${h.generalBeds}" class="w-16 border mr-2">
+                            ICU: <input type="number" id="${id}-icu" value="${h.icuBeds}" class="w-16 border mr-2">
+                            <button onclick="updateHospital('${id}')" class="bg-indigo-600 text-white px-4 py-1 rounded">Update</button>
+                        </div>`;
+                    }
+
+                    // --- AMBULANCE CARD ---
+                    if (ambulanceContainer && currentUser && ambulanceAdmins.includes(currentUser.email)) {
+                        ambulanceContainer.innerHTML += `
+                        <div class="bg-white border border-red-100 p-3 rounded-lg shadow-sm flex justify-between items-center mb-2">
+                            <h3 class="font-bold">${h.name}</h3>
+                            <div class="flex gap-4">
+                                <div><span class="text-xs uppercase">Gen</span> <span class="font-black">${h.generalBeds}</span></div>
+                                <div><span class="text-xs uppercase">ICU</span> <span class="font-black">${h.icuBeds}</span></div>
+                            </div>
+                        </div>`;
+                    }
+                });
+
+                // Update the Live Chart and Stats!
+                updateCityAnalytics(totalGenBeds, totalIcuBeds);
+            });
+        }
+
+        // Draw and update the Chart.js Graph
+        function updateCityAnalytics(genBeds, icuBeds) {
+            const statGen = document.getElementById('stat-gen-beds');
+            const statIcu = document.getElementById('stat-icu-beds');
+            const ctx = document.getElementById('cityCapacityChart');
+
+            if (!ctx) return; // Exit if not on home page
+
+            if (statGen) statGen.innerText = genBeds;
+            if (statIcu) statIcu.innerText = icuBeds;
+
+            // If chart doesn't exist yet, create it safely
+            if (!capacityChart) {
+                capacityChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['General Beds', 'ICU Beds'],
+                        datasets: [{
+                            data: [genBeds, icuBeds],
+                            backgroundColor: ['#3b82f6', '#ef4444'], // Tailwind Blue & Red
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        },
+                        animation: { animateScale: true, animateRotate: true }
+                    }
+                });
+            } else {
+                // If it exists, just update the data smoothly
+                capacityChart.data.datasets[0].data = [genBeds, icuBeds];
+                capacityChart.update();
+            }
+        }
+
+        // 3. Push Updates from Admin Panel to Firestore
+        function updateHospital(hospitalId) {
+            const newGen = document.getElementById(`${hospitalId}-gen`).value;
+            const newIcu = document.getElementById(`${hospitalId}-icu`).value;
+            const newVent = document.getElementById(`${hospitalId}-vent`).value;
+
+            db.collection('hospitals').doc(hospitalId).update({
+                generalBeds: parseInt(newGen),
+                icuBeds: parseInt(newIcu),
+                ventilators: parseInt(newVent)
+            })
+                .then(() => {
+                    // We don't need to manually alert; the onSnapshot listener will immediately update the UI.
+                    console.log("Hospital updated successfully!");
+                })
+                .catch((error) => {
+                    console.error("Error updating hospital: ", error);
+                    alert("Failed to update. Are you logged in as an Admin?");
+                });
+        }
+        function addNewHospital(event) {
+            event.preventDefault(); // Prevents the page from refreshing when you click submit
+
+            // Generate a unique ID for the database (e.g., 'h_1700000000000')
+            const uniqueId = 'h_' + Date.now();
+
+            // Package all the inputs into an object
+            const newHospital = {
+                id: uniqueId,
+                name: document.getElementById('new-hosp-name').value.trim(),
+                location: document.getElementById('new-hosp-loc').value.trim(),
+                phone: document.getElementById('new-hosp-phone').value.trim(),
+                adminEmail: document.getElementById('new-hosp-email').value.trim().toLowerCase(), // Make sure email is lowercase
+                generalBeds: parseInt(document.getElementById('new-hosp-gen').value),
+                icuBeds: parseInt(document.getElementById('new-hosp-icu').value),
+                ventilators: parseInt(document.getElementById('new-hosp-vent').value)
+            };
+
+            // Push it to Firebase
+            db.collection('hospitals').doc(uniqueId).set(newHospital)
+                .then(() => {
+                    alert(`${newHospital.name} was successfully added to the live network!`);
+                    document.getElementById('add-hospital-form').reset(); // Clear the form fields
+                })
+                .catch((error) => {
+                    console.error("Error adding hospital: ", error);
+                    alert("Failed to add hospital. Check your connection or permissions.");
+                });
+        }
+
+        // Start listening when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            listenToHospitalUpdates();
+        });
+        // --- 1. REAL GPS: PATIENT SOS ---
+        // --- 1. BULLETPROOF GPS: PATIENT SOS ---
+        function triggerSOS() {
+            const modal = document.getElementById('sos-modal');
+            modal.classList.remove('hidden');
+            document.getElementById('sos-loading').classList.remove('hidden');
+            document.getElementById('sos-success').classList.add('hidden');
+            document.getElementById('sos-fail').classList.add('hidden');
+
+            // Fallback simulated location (Pune Station area)
+            const fallbackLat = 18.5284;
+            const fallbackLng = 73.8739;
+
+            // Check if browser allows GPS and we aren't running on a local file block
+            if (navigator.geolocation && window.location.protocol !== "file:") {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        // Success! Got real GPS
+                        processEmergencyDispatch(position.coords.latitude, position.coords.longitude);
+                    },
+                    (error) => {
+                        // User clicked "Deny"
+                        alert("⚠️ Location Access Denied. Using simulated patient location for demo.");
+                        processEmergencyDispatch(fallbackLat, fallbackLng);
+                    },
+                    { enableHighAccuracy: true, timeout: 5000 }
+                );
+            } else {
+                // Testing locally on file:///
+                console.warn("Local file detected. Using simulated patient location.");
+                processEmergencyDispatch(fallbackLat, fallbackLng);
+            }
+        }
+
+        function processEmergencyDispatch(patientLat, patientLng) {
+            setTimeout(() => {
+                db.collection('hospitals').get().then(snapshot => {
+                    let bestHospital = null;
+                    let maxScore = -1;
+
+                    snapshot.forEach(doc => {
+                        const h = doc.data();
+                        if (h.icuBeds > 0 || h.generalBeds > 0) {
+                            let score = (h.icuBeds * 5) + h.generalBeds;
+                            if (score > maxScore) {
+                                maxScore = score;
+                                bestHospital = { id: doc.id, ...h };
+                            }
+                        }
+                    });
+
+                    if (bestHospital) {
+                        let updateData = { incomingSOS: firebase.firestore.FieldValue.increment(1) };
+                        if (bestHospital.icuBeds > 0) { updateData.icuBeds = bestHospital.icuBeds - 1; }
+                        else { updateData.generalBeds = bestHospital.generalBeds - 1; }
+
+                        db.collection('hospitals').doc(bestHospital.id).update(updateData).then(() => {
+
+                            // MAGIC HAPPENS HERE: Save the patient's real GPS to the database!
+                            db.collection('activeEmergencies').add({
+                                hospitalId: bestHospital.id,
+                                patientLat: patientLat,
+                                patientLng: patientLng,
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+
+                            document.getElementById('sos-loading').classList.add('hidden');
+                            document.getElementById('sos-success').classList.remove('hidden');
+                            document.getElementById('sos-hospital-name').textContent = bestHospital.name;
+                        });
+                    } else {
+                        document.getElementById('sos-loading').classList.add('hidden');
+                        document.getElementById('sos-fail').classList.remove('hidden');
+                    }
+                }).catch(err => {
+                    alert("Network error. Please call 102.");
+                    closeSOS();
+                });
+            }, 1000);
+        }
+
+        function closeSOS() {
+            document.getElementById('sos-modal').classList.add('hidden');
+        }
+        // Hospital staff clicks this to turn off the flashing SOS alert
+        function acknowledgeSOS(hospitalId) {
+            // This resets the incoming SOS counter back to 0
+            db.collection('hospitals').doc(hospitalId).update({
+                incomingSOS: 0
+            }).then(() => {
+                console.log("SOS Acknowledged by hospital.");
+            });
+        }
+
+        // --- NEW: AMBULANCE SPECIFIC FUNCTIONS ---
+
+        // Transmit Vitals Function
+        function syncVitals() {
+            const hr = document.getElementById('vital-hr').value;
+            const spo2 = document.getElementById('vital-spo2').value;
+            const bp = document.getElementById('vital-bp').value;
+            const temp = document.getElementById('vital-temp').value;
+
+            if (!hr || !spo2 || !bp || !temp) {
+                alert("Please fill out all vital signs before transmitting.");
+                return;
+            }
+
+            // Save to Firebase (creates a 'vitals' collection)
+            db.collection('ambulanceVitals').add({
+                driverId: "sakibtamboli245@gmail.com",
+                heartRate: hr,
+                oxygen: spo2,
+                bloodPressure: bp,
+                temperature: temp,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                // Show success effect on button
+                const btn = event.target;
+                const originalText = btn.innerText;
+                btn.classList.replace('bg-red-600', 'bg-green-500');
+                btn.classList.replace('hover:bg-red-700', 'hover:bg-green-600');
+                btn.innerText = "✓ TRANSMISSION SUCCESSFUL";
+
+                setTimeout(() => {
+                    btn.classList.replace('bg-green-500', 'bg-red-600');
+                    btn.classList.replace('hover:bg-green-600', 'hover:bg-red-700');
+                    btn.innerText = originalText;
+                }, 3000);
+            }).catch(err => {
+                console.error("Error sending vitals:", err);
+                alert("Network error: Could not transmit vitals.");
+            });
+        }
+
+        // Send direct message from Ambulance Panel
+        function sendAmbMessage() {
+            const input = document.getElementById('amb-chat-input');
+            const text = input.value.trim();
+
+            if (text === "") return;
+
+            db.collection('ambulanceComms').add({
+                text: text,
+                author: "AMBULANCE-01 (Sakib)",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                input.value = "";
+            });
+        }
+
+        // Listen for Ambulance Chat Messages
+        let ambChatUnsubscribe = null;
+        function listenToAmbulanceChat() {
+            const chatBox = document.getElementById('amb-messenger');
+            if (!chatBox) return;
+
+            if (ambChatUnsubscribe) ambChatUnsubscribe(); // Prevent duplicates
+
+            ambChatUnsubscribe = db.collection('ambulanceComms')
+                .orderBy('timestamp', 'asc')
+                .limit(20)
+                .onSnapshot(snapshot => {
+                    chatBox.innerHTML = '<p class="text-xs text-green-400 font-mono text-center border-b border-gray-700 pb-2 mb-2">Secure Channel Established</p>';
+
+                    snapshot.forEach(doc => {
+                        const msg = doc.data();
+                        const time = msg.timestamp ? msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now';
+
+                        chatBox.innerHTML += `
+                            <div class="bg-gray-700 p-2 rounded">
+                                <p class="text-xs font-bold text-red-400">${msg.author} <span class="text-gray-400 font-normal text-[10px] float-right">${time}</span></p>
+                                <p class="text-sm text-white font-mono mt-1">${msg.text}</p>
+                            </div>
+                        `;
+                    });
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                });
+        }
+        // --- VOICE INPUT LOGIC FOR COMMUNITY UPDATES ---
+        // --- OPTIMIZED VOICE INPUT LOGIC ---
+        const voiceBtn = document.getElementById('voice-btn');
+        const micIcon = document.getElementById('mic-icon');
+        const langSelect = document.getElementById('voice-lang-select');
+        const chatInput = document.getElementById('message-input');
+
+        // Browser compatibility check
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (!SpeechRecognition) {
+            // Hide the button if the browser doesn't support it (e.g., some versions of Firefox/IE)
+            if (voiceBtn) voiceBtn.style.display = 'none';
+            console.warn("Speech Recognition API not supported in this browser.");
+        } else {
+            const recognition = new SpeechRecognition();
+
+            // Configuration
+            recognition.continuous = false; // Stops automatically when user stops speaking
+            recognition.interimResults = false; // Only returns final result
+            recognition.maxAlternatives = 1;
+
+            let isListening = false;
+
+            voiceBtn.addEventListener('click', () => {
+                if (isListening) {
+                    recognition.stop();
+                    return;
+                }
+
+                // Update language dynamically from the dropdown
+                recognition.lang = langSelect.value;
+
+                try {
+                    recognition.start();
+                } catch (err) {
+                    console.error("Recognition already started or error:", err);
+                }
+            });
+
+            recognition.onstart = () => {
+                isListening = true;
+                micIcon.classList.add('text-red-600', 'animate-pulse');
+                micIcon.innerHTML = `
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+        `; // Changes icon to a "Stop" square
+                chatInput.placeholder = "Listening (speak now)...";
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                chatInput.value = transcript;
+                // Optional: Automatically send the message after speaking
+                // sendMessage(); 
+            };
+
+            recognition.onspeechend = () => {
+                recognition.stop();
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                micIcon.classList.remove('text-red-600', 'animate-pulse');
+                micIcon.innerHTML = `
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+        `; // Resets to Mic icon
+                chatInput.placeholder = "Type or Speak...";
+            };
+
+            recognition.onerror = (event) => {
+                isListening = false;
+                micIcon.classList.remove('text-red-600', 'animate-pulse');
+                console.error("Speech Recognition Error: ", event.error);
+
+                if (event.error === 'not-allowed') {
+                    alert("Microphone access denied. Please enable it in browser settings.");
+                }
+            };
+        }
+        // --- LEAFLET LIVE GPS ROUTING LOGIC ---
+        let ambMap = null;
+        let ambRoutingControl = null;
+
+        function initAmbulanceMap() {
+            // Don't initialize twice, just resize to fix glitches
+            if (ambMap !== null) {
+                ambMap.invalidateSize();
+                return;
+            }
+
+            // 1. Initialize map centered on Pune
+            ambMap = L.map('ambulance-map').setView([18.5204, 73.8567], 13);
+
+            // 2. Load Free OpenStreetMap visual tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap',
+                maxZoom: 19
+            }).addTo(ambMap);
+        }
+
+        // --- 2. REAL GPS: AMBULANCE ROUTING ---
+        // --- 2. BULLETPROOF GPS: AMBULANCE ROUTING ---
+        // --- 2. FAIL-SAFE GPS: AMBULANCE ROUTING ---
+        function startLiveRoute(event) {
+            const btn = event.currentTarget;
+
+            // 1. Force map to initialize and fix "Grey Screen" bug
+            if (!ambMap) {
+                initAmbulanceMap();
+            }
+            // Wait 100ms for map to wake up, then force it to resize
+            setTimeout(() => {
+                ambMap.invalidateSize(true);
+            }, 100);
+
+            btn.innerText = "Connecting...";
+
+            // Fallback Locations
+            const ambLat = 18.5314; // Shivajinagar
+            const ambLng = 73.8446;
+            let patLat = 18.5074;   // Kothrud
+            let patLng = 73.8077;
+
+            // 2. Fetch from Database
+            db.collection('activeEmergencies').orderBy('timestamp', 'desc').limit(1).get()
+                .then(snapshot => {
+                    if (!snapshot.empty) {
+                        const emergency = snapshot.docs[0].data();
+                        patLat = emergency.patientLat;
+                        patLng = emergency.patientLng;
+                        console.log("Found Patient GPS in Database!");
+                    } else {
+                        console.warn("Database empty. Using demo patient location.");
+                    }
+
+                    btn.innerText = "Drawing Route...";
+
+                    // 3. Clear old routes
+                    if (ambRoutingControl) {
+                        ambMap.removeControl(ambRoutingControl);
+                    }
+
+                    // 4. Draw the Route instantly (Bypassing browser GPS blocks for demo)
+                    ambRoutingControl = L.Routing.control({
+                        router: L.Routing.osrmv1({
+                            serviceUrl: 'https://router.project-osrm.org/route/v1'
+                        }),
+                        waypoints: [
+                            L.latLng(ambLat, ambLng), // Ambulance
+                            L.latLng(patLat, patLng)  // Patient
+                        ],
+                        lineOptions: { styles: [{ color: 'red', opacity: 0.8, weight: 6 }] },
+                        createMarker: function (i, wp, nWps) {
+                            let label = i === 0 ? '<b>🚑 Ambulance</b>' : '<b>🚨 Patient</b>';
+                            return L.marker(wp.latLng).bindPopup(label).openPopup();
+                        },
+                        show: false, // Hide turn-by-turn text
+                        addWaypoints: false,
+                        fitSelectedRoutes: true
+                    }).addTo(ambMap);
+
+                    btn.innerText = "🟢 Route Active";
+                    btn.classList.remove('animate-pulse');
+
+                }).catch(err => {
+                    console.error("Firebase Error: ", err);
+                    alert("Database connection failed. Check console for details.");
+                    btn.innerText = "Start GPS Route 📍";
+                });
+        }
+
+        // Helper function to draw the actual map line
+        function drawRoute(ambLat, ambLng, patLat, patLng, btn, isSimulatedPatient) {
+            if (ambRoutingControl) {
+                ambMap.removeControl(ambRoutingControl);
+            }
+
+            ambRoutingControl = L.Routing.control({
+                router: L.Routing.osrmv1({
+                    serviceUrl: 'https://router.project-osrm.org/route/v1'
+                }),
+                waypoints: [
+                    L.latLng(ambLat, ambLng),
+                    L.latLng(patLat, patLng)
+                ],
+                lineOptions: { styles: [{ color: 'red', opacity: 0.8, weight: 6 }] },
+                createMarker: function (i, wp, nWps) {
+                    let label = i === 0 ? '<b>🚑 You (Driver)</b>' : '<b>🚨 Patient Location</b>';
+                    if (isSimulatedPatient && i === 1) label += " <br><span style='color:red;font-size:10px;'>(Simulated Demo)</span>";
+                    return L.marker(wp.latLng).bindPopup(label).openPopup();
+                },
+                show: false,
+                addWaypoints: false,
+                fitSelectedRoutes: true
+            }).addTo(ambMap);
+
+            btn.innerText = "🟢 GPS Route Active";
+            btn.classList.remove('animate-pulse');
+        }
+        let ecgCanvas, ecgCtx, ecgAnimationId;
+        let ecgX = 0; let ecgY = 50; let timeEcg = 0;
+
+        function initECG() {
+            ecgCanvas = document.getElementById('ecg-canvas');
+            if (!ecgCanvas) return;
+
+            ecgCtx = ecgCanvas.getContext('2d');
+            // Force canvas resolution to match its CSS size to prevent blurring
+            ecgCanvas.width = ecgCanvas.offsetWidth;
+            ecgCanvas.height = ecgCanvas.offsetHeight;
+
+            // Matrix Green Styling
+            ecgCtx.lineWidth = 2.5;
+            ecgCtx.strokeStyle = '#22c55e';
+            ecgCtx.shadowBlur = 8;
+            ecgCtx.shadowColor = '#22c55e';
+
+            // Reset loop to prevent double-speed glitches
+            if (ecgAnimationId) cancelAnimationFrame(ecgAnimationId);
+            ecgX = 0;
+            drawECG();
+        }
+
+        function drawECG() {
+            if (!ecgCanvas || !ecgCtx) return;
+
+            // 1. Fade the background slightly every frame to create a trailing tail effect
+            ecgCtx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ecgCtx.fillRect(0, 0, ecgCanvas.width, ecgCanvas.height);
+
+            // 2. Read BPM from the driver's input (Default to 80 if blank)
+            const hrInput = document.getElementById('vital-hr');
+            let bpm = hrInput && hrInput.value ? parseInt(hrInput.value) : 80;
+
+            // Update the digital text on the monitor
+            const bpmDisplay = document.getElementById('ecg-bpm-display');
+            if (bpmDisplay) bpmDisplay.innerText = bpm + " BPM";
+
+            // 3. Calculate line speed based on BPM
+            const speed = (bpm / 60) * 2;
+
+            ecgCtx.beginPath();
+            ecgCtx.moveTo(ecgX, ecgY);
+
+            ecgX += speed;
+            timeEcg += speed;
+
+            const h = ecgCanvas.height;
+            const baseline = h / 2;
+
+            // 4. Mathematical Heartbeat Pattern (PQRST Wave)
+            let cycle = timeEcg % 150;
+
+            if (cycle < 10) {
+                ecgY = baseline - (Math.sin(cycle * Math.PI / 10) * (h * 0.1)); // P wave
+            } else if (cycle > 20 && cycle < 25) {
+                ecgY = baseline + (h * 0.1); // Q wave
+            } else if (cycle >= 25 && cycle < 30) {
+                ecgY = baseline - (h * 0.4); // R wave (Peak Spike)
+            } else if (cycle >= 30 && cycle < 35) {
+                ecgY = baseline + (h * 0.15); // S wave
+            } else if (cycle > 50 && cycle < 70) {
+                ecgY = baseline - (Math.sin((cycle - 50) * Math.PI / 20) * (h * 0.15)); // T wave
+            } else {
+                ecgY = baseline; // Flatline interval
+            }
+
+            // Add slight electronic noise for realism
+            ecgY += (Math.random() - 0.5) * 2;
+
+            ecgCtx.lineTo(ecgX, ecgY);
+            ecgCtx.stroke();
+
+            // 5. Wrap around screen when it hits the right edge
+            if (ecgX > ecgCanvas.width) {
+                ecgX = 0;
+            }
+
+            // 6. Loop the animation forever
+            ecgAnimationId = requestAnimationFrame(drawECG);
+        }
+    </script>
+</body>
+
+</html>
