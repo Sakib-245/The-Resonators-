@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disaster Preparedness Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <script src="https://cdn.botpress.cloud/webchat/v3.2/inject.js"></script>
+    <script>
+        window.botpressWebChat = {
+            init: {
+                botId: 'SE31JSLR', // Your bot ID
+                host: 'https://cdn.botpress.cloud/webchat', // default host
+                extraStyles: {
+                    '--bp-brand-color': '#5A67D8',
+                    '--bp-widget-button-icon': 'url(.png)'
+                }
+            }
+        }
+    </script>
+    <script src="https://files.bpcontent.cloud/2025/08/24/11/20250824112513-SE31JSLR.js" defer></script>
+
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #f0f4f8;
+        }
+
+        .main-content {
+            transition: margin-left 0.3s ease;
+        }
+
+        .sidebar {
+            width: 280px;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar a:hover {
+            background-color: #e2e8f0;
+        }
+
+        .quiz-container {
+            display: none;
+        }
+
+        .quiz-question {
+            margin-bottom: 1rem;
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+
+        .quiz-option {
+            background-color: #fff;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .quiz-option:hover {
+            background-color: #e2e8f0;
+            transform: translateY(-2px);
+        }
+
+    
+       
+
+
+        /* --- PROGRESS RING STYLES --- */
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .stroke-blue-500 {
+            stroke: #3b82f6;
+        }
+
+        .stroke-green-500 {
+            stroke: #22c55e;
+        }
+
+        .stroke-orange-500 {
+            stroke: #f97316;
+        }
+
+        .stroke-indigo-500 {
+            stroke: #6366f1;
+        }
+
+        .stroke-red-500 {
+            stroke: #ef4444;
+        }
+
+        .stroke-purple-500 {
+            stroke: #a855f7;
+        }
+
+        /* --- STYLES FOR SCATTERED CIRCLES --- */
+        /* --- NEW STYLES FOR GRID LAYOUT --- */
+        .progress-item-wrapper {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            border-radius: 0.75rem;
+            background-color: #ffffff;
+            /* Optional: give them a card background */
+            padding: 1rem;
+            /* Optional: add some padding */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            /* Optional: add a subtle shadow */
+        }
+
+        .progress-item-wrapper:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+            z-index: 10;
+        }
+
+        
+        .quiz-container.review-mode .quiz-option {
+            pointer-events: none;
+            /* Disable clicking */
+            cursor: default;
+        }
+
+        .quiz-container.review-mode .quiz-option:hover {
+            transform: none;
+            /* Disable hover effect */
+        }
+
+       
+        .quiz-option.correct {
+            background-color: #a7f3d0;
+            /* light green */
+            border-color: #22c55e;
+        }
+
+        .quiz-option.incorrect {
+            background-color: #fecaca;
+            /* light red */
+            border-color: #ef4444;
+            opacity: 0.7;
+        }
+
+        
+        .quiz-option.correct-answer-reveal {
+            background-color: #f0fff4;
+            /* mint white */
+            border-color: #22c55e;
+        }
+
+        .modal-overlay {
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-container {
+            transition: transform 0.3s ease;
+        }
+
+        /* --- NEW: STYLES FOR PERMANENT DESKTOP SIDEBAR --- */
+        @media (min-width: 1024px) {
+
+            /* This targets desktop-sized screens */
+            #sidebar {
+                transform: translateX(0);
+                /* Makes the sidebar permanently visible */
+            }
+
+            #main-content {
+                margin-left: 280px;
+                /* Pushes the main content to the right */
+            }
+
+            #open-sidebar-btn,
+            #close-sidebar-btn {
+                display: none;
+                /* Hides the menu buttons on desktop, as they aren't needed */
+            }
+        }
+
+        .level-badge {
+            padding: 2px 10px;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 8px;
+            color: white;
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-card {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            /* gray-200 */
+            border-radius: 1rem;
+            /* 16px */
+            padding: 1.25rem;
+            /* 20px */
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            /* Initial state for our load-in animation */
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .info-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-bar-container {
+            background-color: #f3f4f6;
+            /* gray-100 */
+            border-radius: 9999px;
+            height: 10px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 1s cubic-bezier(0.65, 0, 0.35, 1);
+            background-image: linear-gradient(to right, var(--tw-gradient-stops));
+        }
+
+        /* REPLACE previous module styles with this single class inside the <style> tag */
+        .module-select-card {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .chat-message {
+            opacity: 0;
+            transform: translateY(15px);
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-bubble {
+            max-width: 75%;
+        }
+
+        .chat-input-container {
+            border: 1px solid #e5e7eb;
+            /* gray-200 */
+            transition: all 0.2s ease;
+        }
+
+        .chat-input-container:focus-within {
+            border-color: #3b82f6;
+            /* blue-500 */
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .briefing-element {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: briefingFadeIn 0.5s ease forwards;
+        }
+
+        @keyframes briefingFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .contact-element {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: contactFadeIn 0.5s ease forwards;
+        }
+
+        @keyframes contactFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #contact-grid {
+            gap: 1rem;
+            /* This is 24px, equivalent to Tailwind's gap-6 */
+        }
+
+        .tab-button.active-tab {
+            color: #3b82f6;
+            /* Tailwind's blue-500 */
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 flex min-h-screen">
+    <div id="sidebar"
+        class="sidebar fixed top-0 left-0 h-full bg-white shadow-xl z-50 p-6 flex flex-col justify-between rounded-r-lg">
+        <div>
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-2xl font-bold text-gray-800">Menu</h2>
+                <button id="close-sidebar-btn" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <nav class="space-y-4">
+                <div id="auth-container" class="mb-4 p-3 border-b border-gray-200">
+                    <div id="user-info" class="hidden items-center">
+                        <p id="user-email" class="text-sm font-semibold text-gray-700 truncate"></p>
+                        <button onclick="logoutUser()"
+                            class="ml-auto text-sm bg-red-500 text-white font-bold py-1 px-3 rounded-full hover:bg-red-600">Logout</button>
+                    </div>
+                    <button id="login-btn" onclick="loginWithGoogle()"
+                        class="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill="#FFC107"
+                                d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
+                            <path fill="#FF3D00"
+                                d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z" />
+                            <path fill="#4CAF50"
+                                d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.222 0-9.651-3.275-11.286-7.792l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
+                            <path fill="#1976D2"
+                                d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C42.028 36.313 44 31.134 44 24c0-1.341-.138-2.65-.389-3.917z" />
+                        </svg>
+                        Login with Google
+                    </button>
+                </div>
+                <a href="#"
+                    class="block text-gray-700 font-semibold text-lg hover:bg-gray-200 p-3 rounded-lg flex items-center active"
+                    onclick="showSection('home')">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2-2m0 0l2 2m-2-2v10a1 1 0 01-1 1h-3m-6-10v10a1 1 0 001 1h2a1 1 0 001-1v-10m-2 2h2m-4 0h4">
+                        </path>
+                    </svg>
+                    Home
+                </a>
+               
+
+                <div id="admin-link-container"></div>
+            </nav>
+
+        </div>
+
+        <div>
+            <a href="#"
+                class="block text-gray-700 font-semibold text-lg p-3 rounded-lg flex items-center border-t border-gray-300 hover:bg-gray-200"
+                onclick="showSection('contact')">
+                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                    </path>
+                </svg>
+                Contact Us
+            </a>
+        </div>
+    </div>
+
+    <div id="main-content" class="main-content flex-grow transition-all duration-300 p-4 sm:p-8">
+        <button id="open-sidebar-btn"
+            class="fixed top-4 left-4 z-50 p-2 bg-white rounded-full shadow-lg text-gray-700 hover:bg-gray-200 focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+            </svg>
+        </button>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+            <div class="flex-grow">
+                <div id="home-section" class="content-section rounded-xl bg-white p-8 shadow-md">
+                    <h1
+                        class="text-5xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-blue-600 mb-4">
+                        Live Hospital Resource Tracker
+                    </h1>
+                    <p class="text-lg text-gray-600 text-center mb-12">
+                        Real-time availability of ICU beds, ventilators, and emergency ambulances across the city.
+                    </p>
+
+                    <div class="mb-12 bg-white border border-gray-200 p-6 rounded-lg shadow-sm">
+                        <div class="flex items-center mb-3">
+                            <svg class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <h3 class="ml-3 text-2xl font-bold text-gray-800">Critical Alerts</h3>
+                        </div>
+                        <div id="rotating-tip-container" class="relative h-12">
+                            <p id="safety-tip-text"
+                                class="absolute w-full text-lg text-red-600 font-semibold transition-opacity duration-500 ease-in-out opacity-0">
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center mb-6 border-b pb-2">
+                        <h2 class="text-3xl font-bold text-gray-800">Available Hospitals</h2>
+                        <span
+                            class="bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full flex items-center">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span> Live Updates
+                        </span>
+                    </div>
+
+                    <div id="patient-hospitals-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <p class="text-gray-500 col-span-3 text-center py-8">Fetching live hospital data...</p>
+                    </div>
+                </div>
+
+                <div id="warnings-content-wrapper" class="max-w-3xl mx-auto">
+
+                    <div id="warnings-cta-first-view" class="space-y-6">
+
+                        
+                        </div> 
+
+                       
+                    </div>
+
+                    <div id="warnings-container" class="space-y-4"></div>
+                </div>
+            </div>
+
+            
+            
+            <div id="admin-panel-section" class="content-section hidden rounded-xl bg-white p-8 shadow-md mt-8">
+                <div
+                    class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 mb-6 gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold text-indigo-800">Hospital Admin Portal</h2>
+                        <p class="text-sm text-gray-600 mt-1">Update bed and ventilator availability. Changes reflect
+                            instantly to patients.</p>
+                    </div>
+                    <button onclick="seedInitialHospitals()"
+                        class="bg-gray-800 text-white font-bold px-4 py-2 rounded-lg hover:bg-gray-900 transition shadow-md whitespace-nowrap">
+                        Initialize DB (Run Once)
+                    </button>
+                </div>
+
+                <div id="admin-hospitals-container" class="space-y-6">
+                    <p class="text-gray-500 text-center py-8">Loading hospital management tools...</p>
+                </div>
+            </div>
+            <div id="contact-section" class="content-section hidden rounded-xl bg-white p-8 shadow-md mt-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 mb-2">Get in Touch</h2>
+                    <p class="text-lg text-gray-500">We'd love to hear from you. Reach out with any questions or
+                        feedback.</p>
+                </div>
+
+                <div id="contact-grid" class="grid grid-cols-1 md:grid-cols-2 gap-12" style="gap: 1rem;">
+                    <div class="contact-element">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6">Contact Information</h3>
+                        <div class="space-y-6">
+                            <div class="flex items-start">
+                                <div
+                                    class="flex-shrink-0 w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <h4 class="text-lg font-semibold text-gray-700">Email</h4>
+                                    <p class="text-gray-600">contact@disasterhub.com</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div
+                                    class="flex-shrink-0 w-12 h-12 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <h4 class="text-lg font-semibold text-gray-700">Phone</h4>
+                                    <p class="text-gray-600">+91 98765 43210</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div
+                                    class="flex-shrink-0 w-12 h-12 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-4">
+                                    <h4 class="text-lg font-semibold text-gray-700">Address</h4>
+                                    <p class="text-gray-600">ABC College, XYZ City</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="contact-element" style="animation-delay: 0.1s;">
+                        <div class="bg-gray-50 rounded-2xl p-8 border">
+                            <form id="contact-form" onsubmit="handleSendMessage(event)" class="space-y-4">
+                                <div>
+                                    <label for="name" class="font-semibold text-gray-700">Full Name</label>
+                                    <input type="text" id="name" required
+                                        class="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label for="email" class="font-semibold text-gray-700">Email</label>
+                                    <input type="email" id="email" required
+                                        class="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label for="message" class="font-semibold text-gray-700">Message</label>
+                                    <textarea id="message" rows="4" required
+                                        class="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                                </div>
+                                <button type="submit"
+                                    class="w-full bg-blue-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-600 transition-colors">
+                                    Send Message
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    </div>
+    
+    <script>
+        // --- START OF COMPLETE SCRIPT ---
+
+        // 1. Initialize Firebase
+        // PASTE YOUR FIREBASE CONFIG OBJECT HERE
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyB58DDP4gaoz47b8g8UQgaboJ1fhfJvsfU",
+            authDomain: "disaster-hub-cc4af.firebaseapp.com",
+            projectId: "disaster-hub-cc4af",
+            storageBucket: "disaster-hub-cc4af.firebasestorage.app",
+            messagingSenderId: "9396233266",
+            appId: "1:9396233266:web:6b5741c9bd7dc7ddd0c82b",
+            measurementId: "G-QW6J6R6581"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+        let currentUser = null; // Variable to hold the current user object
+
+        // --- NEW: Authentication Logic ---
+
+        function loginWithGoogle() {
+            auth.signInWithPopup(googleProvider)
+                .catch((error) => {
+                    console.error("Error during sign-in:", error);
+                    alert("Could not log in. Please try again.");
+                });
+        }
+
+        function logoutUser() {
+            auth.signOut();
+        }
+
+        auth.onAuthStateChanged(user => {
+            const userInfoDiv = document.getElementById('user-info');
+            const userEmailP = document.getElementById('user-email');
+            const loginBtn = document.getElementById('login-btn');
+            const adminLinkContainer = document.getElementById('admin-link-container');
+
+            // Define your admin emails here
+            const adminEmails = ['piyushdinkar7595@gmail.com'];
+
+            adminLinkContainer.innerHTML = '';
+
+            if (user) {
+                currentUser = user;
+                userInfoDiv.classList.remove('hidden');
+                userInfoDiv.classList.add('flex');
+                loginBtn.classList.add('hidden');
+                userEmailP.textContent = user.email;
+                loadScoresFromFirestore();
+
+                // CHECK IF USER IS ADMIN
+                if (adminEmails.includes(user.email)) {
+                    adminLinkContainer.innerHTML = `
+                <a href="#" 
+                   onclick="showSection('admin-panel')"
+                   class="block text-indigo-700 font-bold text-lg hover:bg-indigo-100 p-3 rounded-lg flex items-center mt-4 border-t-2 border-indigo-200">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m12 0v-2a4 4 0 00-4-4h-1.333a4 4 0 00-3.92 5.333M15 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    Admin Panel
+                </a>`;
+                }
+            } else {
+                currentUser = null;
+                userInfoDiv.classList.add('hidden');
+                userInfoDiv.classList.remove('flex');
+                loginBtn.classList.remove('hidden');
+                userEmailP.textContent = '';
+                const localScores = JSON.parse(localStorage.getItem('quizScores')) || {};
+                displayAllScores(localScores);
+            }
+        });
+
+
+        // --- DOM Element Variables ---
+        const openSidebarBtn = document.getElementById('open-sidebar-btn');
+        const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('main-content');
+        const moduleLinks = document.querySelectorAll('.module-link-btn');
+        const contentSections = document.querySelectorAll('.content-section');
+        const navLinks = document.querySelectorAll('nav a');
+        const moduleNames = ["Earthquake", "Flood", "Fire", "Hurricane", "Tornado", "Tsunami"];
+        const themeColors = ['blue-500', 'green-500', 'orange-500', 'indigo-500', 'red-500', 'purple-500'];
+
+        
+        
+        function toggleSidebar() {
+            sidebar.classList.toggle('open');
+        }
+
+        openSidebarBtn.addEventListener('click', toggleSidebar);
+        closeSidebarBtn.addEventListener('click', toggleSidebar);
+
+        
+        
+        function showSection(sectionId) {
+            if (unsubscribeFromMessages) {
+                unsubscribeFromMessages();
+                unsubscribeFromMessages = null;
+            }
+
+            contentSections.forEach(section => {
+                section.classList.add('hidden');
+            });
+
+            const currentSection = document.getElementById(sectionId + '-section');
+            if (currentSection) {
+                currentSection.classList.remove('hidden');
+            }
+
+            if (sectionId === 'tracking') {
+                if (currentUser) {
+                    loadScoresFromFirestore();
+                } else {
+                    const localScores = JSON.parse(localStorage.getItem('quizScores')) || {};
+                    displayAllScores(localScores);
+                }
+            }
+            // --- END OF FIX ---
+
+            if (sectionId === 'live-updates') {
+                listenForMessages();
+            }
+
+            navLinks.forEach(link => {
+                link.classList.remove('active', 'bg-gray-200');
+                if (link.getAttribute('onclick') === `showSection('${sectionId}')`) {
+                    link.classList.add('active', 'bg-gray-200');
+                }
+            });
+
+            if (sidebar.classList.contains('open')) {
+                // Only toggle for mobile view, which is handled by the 'open' class
+                const isDesktop = window.innerWidth >= 1024;
+                if (!isDesktop) {
+                    toggleSidebar();
+                }
+            }
+        }
+
+        moduleLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                const target = e.currentTarget.dataset.target;
+                showSection(target);
+            });
+        });
+
+       
+
+       
+
+        function displayAllScores(scores) {
+            scores = scores || {};
+            const grid = document.getElementById('progress-grid');
+            const subtitle = document.getElementById('progress-subtitle');
+            grid.innerHTML = '';
+            subtitle.innerHTML = '';
+
+            const moduleIcons = [
+                `<path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.362-3.797z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 15a2.25 2.25 0 01-2.25-2.25V6a2.25 2.25 0 012.25-2.25v11.25z" />`,
+                `<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />`,
+                `<path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6c1.121 0 2.176-.434 2.966-1.174.79-.74 1.266-1.735 1.266-2.831z" />`,
+                `<path stroke-linecap="round" stroke-linejoin="round" d="M12 3.75v16.5M12.75 3.75L16.5 7.5M12 3.75L7.5 7.5M12 20.25L7.5 16.5M12.75 20.25L16.5 16.5" transform="rotate(45 12 12)"/>`,
+                `<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />`,
+                `<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75l7.5-7.5 7.5 7.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75l7.5-7.5 7.5 7.5" />`
+            ];
+
+           
+            
+
+           
+           
+
+           
+            for (let i = 0; i < 6; i++) {
+                const scoreData = scores[i] || { score: 0, total: 10 };
+                const percent = Math.round((scoreData.score / scoreData.total) * 100);
+                const moduleHTML = `
+            <div class="info-card">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-${themeColors[i].split('-')[0]}-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-${themeColors[i]}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${moduleIcons[i]}</svg>
+                    </div>
+                    <h4 class="font-bold text-gray-800 text-lg">${moduleNames[i]}</h4>
+                </div>
+                
+                <div class="my-4 flex justify-center items-center">
+                    <div class="relative w-24 h-24">
+                        <svg class="w-full h-full" viewBox="0 0 100 100">
+                            <circle class="text-gray-200" stroke-width="10" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />
+                            <circle class="progress-ring__circle stroke-${themeColors[i]}" stroke-width="10" stroke-linecap="round" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" data-progress-id="${i}" />
+                        </svg>
+                        <span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-bold text-gray-700">
+                            ${percent}%
+                        </span>
+                    </div>
+                </div>
+                <div class="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center">
+                    <p class="text-sm text-gray-500">Score: <strong>${scoreData.score}/${scoreData.total}</strong></p>
+                    <button class="bg-gray-100 text-gray-700 font-bold py-1 px-3 rounded-lg text-sm hover:bg-gray-200 transition-colors" onclick="reviewQuiz(${i})">
+                        Review
+                    </button>
+                </div>
+            </div>`;
+                grid.innerHTML += moduleHTML;
+            }
+
+            const cards = document.querySelectorAll('#progress-grid .info-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100 * (index + 1));
+            });
+
+            setTimeout(() => {
+                for (let i = 0; i < 6; i++) {
+                    const circle = document.querySelector(`[data-progress-id="${i}"]`);
+                    if (circle) {
+                        const scoreData = scores[i] || { score: 0, total: 10 };
+                        const percent = (scoreData.score / scoreData.total) * 100;
+                        const radius = circle.r.baseVal.value;
+                        const circumference = 2 * Math.PI * radius;
+                        const offset = circumference - (percent / 100) * circumference;
+                        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+                        circle.style.strokeDashoffset = offset;
+                    }
+                }
+            }, 200);
+        }
+
+        
+        function toggleCard(cardElement) {
+            cardElement.classList.toggle('open');
+        }
+
+        async function reviewQuiz(quizId) {
+            let scores = {};
+            if (currentUser) {
+                try {
+                    const doc = await db.collection('userScores').doc(currentUser.uid).get();
+                    if (doc.exists) {
+                        scores = doc.data();
+                    }
+                } catch (error) {
+                    console.error("Error fetching review scores:", error);
+                }
+            } else {
+                scores = JSON.parse(localStorage.getItem('quizScores')) || {};
+            }
+
+            const quizData = scores[quizId];
+            if (!quizData || !quizData.userAnswers) {
+                showSection(`module-${quizId + 1}`);
+                document.getElementById(`module-${quizId + 1}-section`).scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
+            showSection(`module-${quizId + 1}`);
+            const quizContainer = document.getElementById(`quiz-${quizId}`);
+            const questions = quizzes[quizId].questions;
+            const userAnswers = quizData.userAnswers;
+            quizContainer.style.display = 'block';
+            quizContainer.classList.add('review-mode');
+            questions.forEach((question, index) => {
+                const userAnswer = userAnswers[index];
+                const correctAnswer = question.correct;
+                const questionDiv = quizContainer.querySelector(`[data-quiz-number="${quizId}"] > div:nth-child(${index + 1})`);
+                questionDiv.querySelectorAll('.quiz-option').forEach(opt => {
+                    opt.classList.remove('selected', 'correct', 'incorrect', 'correct-answer-reveal');
+                });
+                if (userAnswer !== null) {
+                    const selectedOption = questionDiv.querySelector(`.quiz-option[data-answer="${userAnswer}"]`);
+                    if (userAnswer === correctAnswer) {
+                        if (selectedOption) selectedOption.classList.add('correct');
+                    } else {
+                        if (selectedOption) selectedOption.classList.add('incorrect');
+                        const correctOption = questionDiv.querySelector(`.quiz-option[data-answer="${correctAnswer}"]`);
+                        if (correctOption) correctOption.classList.add('correct-answer-reveal');
+                    }
+                } else {
+                    const correctOption = questionDiv.querySelector(`.quiz-option[data-answer="${correctAnswer}"]`);
+                    if (correctOption) correctOption.classList.add('correct-answer-reveal');
+                }
+            });
+            const submitButton = quizContainer.querySelector('button[onclick^="submitQuiz"]');
+            if (submitButton) {
+                submitButton.style.display = 'none';
+            }
+            quizContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function submitQuiz(quizId) {
+            const quizContainer = document.getElementById(`quiz-${quizId}`);
+            const questions = quizzes[quizId].questions;
+            let correctAnswers = 0;
+            const userAnswers = [];
+            quizContainer.classList.add('review-mode');
+
+            questions.forEach((question, index) => {
+                const selectedOption = quizContainer.querySelector(
+                    `[data-quiz-number="${quizId}"] > div:nth-child(${index + 1}) .quiz-option.selected`
+                );
+                if (selectedOption) {
+                    const selectedAnswer = parseInt(selectedOption.dataset.answer);
+                    userAnswers.push(selectedAnswer);
+                    if (selectedAnswer === question.correct) {
+                        correctAnswers++;
+                        selectedOption.classList.add("correct");
+                    } else {
+                        selectedOption.classList.add("incorrect");
+                        const correctOption = quizContainer.querySelector(`[data-quiz-number="${quizId}"] > div:nth-child(${index + 1}) .quiz-option[data-answer="${question.correct}"]`);
+                        if (correctOption) correctOption.classList.add('correct-answer-reveal');
+                    }
+                } else {
+                    userAnswers.push(null);
+                }
+            });
+
+            const scorePayload = {
+                [quizId]: { score: correctAnswers, total: 10, userAnswers: userAnswers }
+            };
+
+            if (currentUser) {
+                const userScoresRef = db.collection('userScores').doc(currentUser.uid);
+                await userScoresRef.set(scorePayload, { merge: true });
+            } else {
+                const scores = JSON.parse(localStorage.getItem('quizScores')) || {};
+                scores[quizId] = scorePayload[quizId];
+                localStorage.setItem('quizScores', JSON.stringify(scores));
+            }
+
+            setTimeout(() => {
+                showSection('tracking');
+                document.getElementById('tracking-section').scrollIntoView({ behavior: 'smooth' });
+            }, 2500);
+        }
+
+        
+        function closeDrill() {
+            clearInterval(drillInterval);
+            const modal = document.getElementById('drill-modal');
+            const modalContainer = modal.querySelector('.modal-container');
+
+            modal.classList.add('opacity-0');
+            if (modalContainer) {
+                modalContainer.classList.add('scale-95');
+            }
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // --- Real-time Chat Functions ---
+        function sendMessage() {
+            const messageInput = document.getElementById('message-input');
+            const messageText = messageInput.value.trim();
+
+            if (!currentUser) {
+                alert("Please log in with Google to send a message.");
+                return;
+            }
+
+            if (messageText === "") {
+                alert("Message cannot be empty.");
+                return;
+            }
+
+            db.collection('messages').add({
+                text: messageText,
+                author: currentUser.email,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                messageInput.value = '';
+            }).catch(error => {
+                console.error("Error sending message: ", error);
+                alert("Could not send message. Please try again.");
+            });
+        }
+
+        let unsubscribeFromMessages = null;
+
+        // ADD this new helper function to your script
+        function generateAvatar(email) {
+            if (!email) email = '??';
+            // This now takes only the first letter for the avatar
+            const initials = email.charAt(0).toUpperCase();
+            let hash = 0;
+            for (let i = 0; i < email.length; i++) {
+                hash = email.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const colors = ['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-indigo-500', 'bg-purple-500', 'bg-pink-500'];
+            const color = colors[Math.abs(hash) % colors.length];
+            return `<div class="w-10 h-10 rounded-full ${color} flex items-center justify-center font-bold text-white flex-shrink-0 text-lg">${initials}</div>`;
+        }
+
+        // REPLACE your entire existing listenForMessages function with this one
+        function listenForMessages() {
+            const messagesContainer = document.getElementById('messages-container');
+            const query = db.collection('messages').orderBy('timestamp', 'asc').limit(50);
+
+            unsubscribeFromMessages = query.onSnapshot(snapshot => {
+                snapshot.docChanges().forEach(change => {
+                    if (change.type === "added") {
+                        const message = change.doc.data();
+                        const messageElement = document.createElement('div');
+                        messageElement.classList.add('chat-message');
+
+                        const date = message.timestamp ? message.timestamp.toDate() : new Date();
+                        const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                        const avatarHTML = generateAvatar(message.author);
+
+                        // === This is the change ===
+                        // We now get only the first letter of the email to display
+                        const displayName = message.author.charAt(0).toUpperCase();
+
+                        if (currentUser && message.author === currentUser.email) {
+                            // User's own message (align right)
+                            messageElement.classList.add('flex', 'items-end', 'justify-end');
+                            messageElement.innerHTML = `
+                        <div class="chat-bubble order-1">
+                            <div class="px-4 py-2 rounded-2xl bg-blue-500 text-white">
+                                <p>${message.text}</p>
+                            </div>
+                            <p class="text-xs text-gray-400 text-right mt-1">${timeString}</p>
+                        </div>
+                        <div class="order-2 ml-3">${avatarHTML}</div>
+                    `;
+                        } else {
+                            // Other users' messages (align left)
+                            messageElement.classList.add('flex', 'items-end');
+                            messageElement.innerHTML = `
+                        <div class="order-1 mr-3">${avatarHTML}</div>
+                        <div class="chat-bubble order-2">
+                            <div class="px-4 py-2 rounded-2xl bg-gray-200 text-gray-800">
+                                <p class="font-semibold text-sm">${displayName}</p>
+                                <p>${message.text}</p>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1">${timeString}</p>
+                        </div>
+                    `;
+                        }
+                        messagesContainer.appendChild(messageElement);
+                    }
+                });
+                // Auto-scroll to the latest message
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            });
+        }
+
+        // --- Disaster Warnings Functions ---
+        const mockDisasters = [
+            { event: "Severe Thunderstorm Warning", description: "A severe thunderstorm is moving through the area with potential for large hail and damaging winds of up to 90 km/h.", severity: "High", lat: 18.5204, lon: 73.8567 },
+            { event: "Flood Watch", description: "Heavy rainfall of over 150mm is expected, which may lead to localized flooding in low-lying areas near rivers. Be prepared to move to higher ground.", severity: "Moderate", lat: 19.0760, lon: 72.8777 },
+            { event: "Extreme Heat Advisory", description: "Temperatures are expected to reach 42°C. Stay hydrated and avoid outdoor activities during peak afternoon hours.", severity: "Moderate", lat: 28.6139, lon: 77.2090 },
+            { event: "Cyclone Alert", description: "A cyclone is forming in the Bay of Bengal and is expected to make landfall. Evacuation orders may be issued for coastal regions.", severity: "High", lat: 13.0827, lon: 80.2707 },
+        ];
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 0.5 - Math.cos(dLat) / 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * (1 - Math.cos(dLon)) / 2;
+            return (R * 2 * Math.asin(Math.sqrt(a))).toFixed(1);
+        }
+
+        function getWarnings() {
+            const warningsContainer = document.getElementById('warnings-container');
+            const initialView = document.getElementById('warnings-cta-first-view'); // Updated ID
+
+            // Hide the initial view and show a loading message
+            if (initialView) {
+                initialView.style.display = 'none';
+            }
+            warningsContainer.innerHTML = '<p class="text-gray-600 text-center">Fetching your location and checking for warnings...</p>';
+
+            if (!navigator.geolocation) {
+                warningsContainer.innerHTML = '<p class="text-red-600 font-semibold text-center">Geolocation is not supported by your browser.</p>';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    warningsContainer.innerHTML = ''; // Clear loading message
+
+                    let warningsFound = false;
+                    let delay = 0;
+                    mockDisasters.forEach(disaster => {
+                        const distance = calculateDistance(latitude, longitude, disaster.lat, disaster.lon);
+
+                        const card = document.createElement('div');
+                        const severityColor = disaster.severity === 'High' ? 'red' : 'yellow';
+
+                        card.className = `briefing-element bg-white p-5 rounded-xl border-l-4 border-${severityColor}-500 shadow-md`;
+                        card.style.animationDelay = `${delay}s`;
+                        delay += 0.1;
+
+                        card.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 pt-1">
+                            <svg class="w-6 h-6 text-${severityColor}-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-bold text-gray-800">${disaster.event}</h3>
+                            <p class="text-sm text-gray-600 mt-1">${disaster.description}</p>
+                            <p class="text-xs font-semibold text-gray-500 mt-2">Estimated Distance: ${distance} km away</p>
+                        </div>
+                    </div>
+                `;
+                        warningsContainer.appendChild(card);
+                        warningsFound = true;
+                    });
+
+                    if (!warningsFound) {
+                        warningsContainer.innerHTML = `
+                    <div class="briefing-element text-center bg-green-50 text-green-800 font-semibold p-6 rounded-xl border border-green-200">
+                        No active warnings for your location at this time. Stay safe!
+                    </div>
+                `;
+                    }
+                },
+                (error) => {
+                    let message = 'Could not retrieve your location. ';
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            message += "You denied the request for Geolocation.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            message += "Location information is unavailable.";
+                            break;
+                        case error.TIMEOUT:
+                            message += "The request to get user location timed out.";
+                            break;
+                        case error.UNKNOWN_ERROR:
+                            message += "An unknown error occurred.";
+                            break;
+                    }
+                    warningsContainer.innerHTML = `<p class="text-red-600 font-semibold text-center">${message}</p>`;
+                }
+            );
+        }
+        // ADD this new code inside your main <script> tag
+
+        // This function creates our new, creative module cards
+        // REPLACE the entire old displayModuleCards function with this new one
+
+        function displayModuleCards() {
+            const grid = document.getElementById('modules-grid-select');
+            if (!grid) return;
+
+            const modulesData = [
+                { name: "Earthquake", icon: `<path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.362-3.797z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 15a2.25 2.25 0 01-2.25-2.25V6a2.25 2.25 0 012.25-2.25v11.25z" />`, theme: { main: 'blue', light: 'blue-100', dark: 'blue-800' } },
+                { name: "Flood", icon: `<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />`, theme: { main: 'green', light: 'green-100', dark: 'green-800' } },
+                { name: "Fire", icon: `<path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6c1.121 0 2.176-.434 2.966-1.174.79-.74 1.266-1.735 1.266-2.831z" />`, theme: { main: 'orange', light: 'orange-100', dark: 'orange-800' } },
+                { name: "Hurricane", icon: `<path stroke-linecap="round" stroke-linejoin="round" d="M12 3.75v16.5M12.75 3.75L16.5 7.5M12 3.75L7.5 7.5M12 20.25L7.5 16.5M12.75 20.25L16.5 16.5" transform="rotate(45 12 12)"/>`, theme: { main: 'indigo', light: 'indigo-100', dark: 'indigo-800' } },
+                { name: "Tornado", icon: `<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />`, theme: { main: 'red', light: 'red-100', dark: 'red-800' } },
+                { name: "Tsunami", icon: `<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75l7.5-7.5 7.5 7.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75l7.5-7.5 7.5 7.5" />`, theme: { main: 'purple', light: 'purple-100', dark: 'purple-800' } }
+            ];
+
+            grid.innerHTML = modulesData.map((module, i) => {
+                const theme = module.theme;
+                return `
+            <div class="module-select-card bg-white border border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center text-center h-48 cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300" 
+                 onclick="showSection('module-${i + 1}')">
+                
+                <div class="w-16 h-16 bg-${theme.light} rounded-full flex items-center justify-center mb-4">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-${theme.dark}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        ${module.icon}
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">${module.name}</h3>
+
+            </div>
+        `;
+            }).join('');
+
+            // --- Staggered Load-In Animation ---
+            const cards = document.querySelectorAll('.module-select-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100 * (index + 1));
+            });
+        }
+
+
+
+        // Ensure the new module cards are displayed when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            displayModuleCards();
+            // ... any other logic you have in DOMContentLoaded
+        });
+        // --- NEW: Rotating Safety Tip Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const tips = [
+                "🚨 Metro Care ICU is currently operating at full capacity. Please reroute critical patients to Sunrise Health Clinic.",
+                "🚑 3 Advanced Life Support (ALS) ambulances are currently available in the Downtown Area.",
+                "💡 Always bring the patient's ID and previous medical records for faster admission.",
+                "🏥 City General Hospital has just freed up 5 new Ventilator units.",
+                "📞 In case of a life-threatening emergency, always dial 102 immediately."
+            ];
+            const tipElement = document.getElementById('safety-tip-text');
+            let currentTipIndex = 0;
+
+            if (tipElement) {
+                function rotateTip() {
+                    // Fade out the current tip
+                    tipElement.classList.remove('opacity-100');
+                    tipElement.classList.add('opacity-0');
+
+                    // After the fade-out transition ends, change the text and fade it back in
+                    setTimeout(() => {
+                        // Move to the next tip, looping back to the start if necessary
+                        currentTipIndex = (currentTipIndex + 1) % tips.length;
+                        tipElement.textContent = tips[currentTipIndex];
+
+                        // Fade in the new tip
+                        tipElement.classList.remove('opacity-0');
+                        tipElement.classList.add('opacity-100');
+                    }, 500); // This delay should match the transition duration
+                }
+
+                // Display the first tip immediately without delay
+                tipElement.textContent = tips[currentTipIndex];
+                tipElement.classList.remove('opacity-0');
+                tipElement.classList.add('opacity-100');
+
+                // Set the interval to rotate the tips every 5 seconds
+                setInterval(rotateTip, 5000);
+            }
+        });
+        // --- END: Rotating Safety Tip Logic ---
+
+        const messageInput = document.getElementById('message-input');
+
+        if (messageInput) {
+            messageInput.addEventListener('keydown', function (event) {
+                // Check if the key pressed was 'Enter'
+                if (event.key === 'Enter') {
+                    // Prevent the default browser action (like adding a new line)
+                    event.preventDefault();
+
+                    // Trigger the existing sendMessage function
+                    sendMessage();
+                }
+            });
+        }
+        function handleSendMessage(event) {
+            event.preventDefault(); // Prevents the page from reloading
+
+            // Get the values from the form fields
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const message = document.getElementById('message').value.trim();
+
+            // The 'required' attribute on your HTML inputs handles validation,
+            // but this is an extra check.
+            if (!name || !email || !message) {
+                alert('Please fill out all fields.');
+                return;
+            }
+
+            // Use the 'db' instance you already initialized for Firestore
+            db.collection('contactSubmissions').add({
+                name: name,
+                email: email,
+                message: message,
+                submittedAt: firebase.firestore.FieldValue.serverTimestamp() // Adds a server timestamp
+            })
+                .then(() => {
+                    alert('Thank you! Your message has been sent successfully.');
+                    document.getElementById('contact-form').reset(); // Clears the form on success
+                })
+                .catch((error) => {
+                    console.error("Error sending message: ", error);
+                    alert('Sorry, something went wrong. Please try again later.');
+                });
+        }
+        // --- HOSPITAL REAL-TIME DASHBOARD LOGIC ---
+
+        // 1. Run this once to populate your Firestore with the initial hospitals
+        function seedInitialHospitals() {
+            const hospitals = [
+                { id: 'h1', name: 'City General Hospital', location: 'Downtown Area', phone: '102', generalBeds: 45, icuBeds: 5, ventilators: 12 },
+                { id: 'h2', name: 'Metro Care Multi-Specialty', location: 'North District', phone: '020-555-1234', generalBeds: 3, icuBeds: 0, ventilators: 1 },
+                { id: 'h3', name: 'Sunrise Health Clinic', location: 'East Wing', phone: '020-555-9876', generalBeds: 28, icuBeds: 8, ventilators: 2 }
+            ];
+
+            hospitals.forEach(hosp => {
+                db.collection('hospitals').doc(hosp.id).set(hosp)
+                    .then(() => console.log(`Seeded ${hosp.name}`))
+                    .catch(err => console.error("Error seeding: ", err));
+            });
+            alert("Database initialized! The dashboard should now populate.");
+        }
+
+        // 2. Listen to Firestore in Real-Time
+        function listenToHospitalUpdates() {
+            db.collection('hospitals').onSnapshot((snapshot) => {
+                const patientGrid = document.getElementById('patient-hospitals-grid');
+                const adminContainer = document.getElementById('admin-hospitals-container');
+
+                patientGrid.innerHTML = '';
+                adminContainer.innerHTML = '';
+
+                snapshot.forEach((doc) => {
+                    const h = doc.data();
+                    const id = doc.id;
+
+                    // Determine styling based on availability
+                    const isFull = h.icuBeds === 0 && h.generalBeds === 0;
+                    const cardBorder = isFull ? 'border-red-500' : 'border-green-500';
+                    const btnClass = isFull
+                        ? 'bg-red-100 text-red-600 border border-red-200 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md';
+                    const btnText = isFull ? 'Hospital Full - Reroute' : 'Book Emergency Bed';
+
+                    // --- BUILD PATIENT CARD ---
+                    patientGrid.innerHTML += `
+                <div class="bg-gray-50 p-6 rounded-lg border-t-4 ${cardBorder} shadow-sm transition-all duration-300">
+                    <h3 class="text-xl font-bold text-gray-800 mb-1">${h.name}</h3>
+                    <p class="text-sm text-gray-500 mb-4 flex items-center">
+                        <span class="mr-2">📍 ${h.location}</span> | <span class="ml-2">📞 ${h.phone}</span>
+                    </p>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center border-b border-gray-200 pb-1">
+                            <span class="text-gray-700 font-medium">General Beds</span> 
+                            <span class="font-bold ${h.generalBeds > 5 ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'} px-3 py-1 rounded-full text-sm">${h.generalBeds} Available</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-gray-200 pb-1">
+                            <span class="text-gray-700 font-medium">ICU Beds</span> 
+                            <span class="font-bold ${h.icuBeds > 2 ? 'text-green-700 bg-green-100' : 'text-red-700 bg-red-100'} px-3 py-1 rounded-full text-sm">${h.icuBeds} Available</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700 font-medium">Ventilators</span> 
+                            <span class="font-bold ${h.ventilators > 2 ? 'text-green-700 bg-green-100' : 'text-yellow-700 bg-yellow-100'} px-3 py-1 rounded-full text-sm">${h.ventilators} Available</span>
+                        </div>
+                    </div>
+                    <button class="w-full mt-6 font-semibold py-2 rounded-lg transition-colors ${btnClass}">
+                        ${btnText}
+                    </button>
+                </div>
+            `;
+
+                    // --- BUILD ADMIN EDITOR CARD ---
+                    adminContainer.innerHTML += `
+                <div class="bg-white border border-indigo-100 p-6 rounded-lg shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="w-full md:w-1/3">
+                        <h3 class="font-bold text-lg text-gray-800">${h.name}</h3>
+                        <p class="text-xs text-gray-500">ID: ${id}</p>
+                    </div>
+                    <div class="w-full md:w-2/3 flex gap-4">
+                        <div class="flex flex-col">
+                            <label class="text-xs font-semibold text-gray-600">General Beds</label>
+                            <input type="number" id="${id}-gen" value="${h.generalBeds}" class="w-20 p-2 border rounded bg-gray-50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-xs font-semibold text-gray-600">ICU Beds</label>
+                            <input type="number" id="${id}-icu" value="${h.icuBeds}" class="w-20 p-2 border rounded bg-gray-50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-xs font-semibold text-gray-600">Ventilators</label>
+                            <input type="number" id="${id}-vent" value="${h.ventilators}" class="w-20 p-2 border rounded bg-gray-50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                        <div class="flex flex-col justify-end">
+                            <button onclick="updateHospital('${id}')" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded hover:bg-indigo-700 transition">
+                                Update Sync
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+                });
+            });
+        }
+
+        // 3. Push Updates from Admin Panel to Firestore
+        function updateHospital(hospitalId) {
+            const newGen = document.getElementById(`${hospitalId}-gen`).value;
+            const newIcu = document.getElementById(`${hospitalId}-icu`).value;
+            const newVent = document.getElementById(`${hospitalId}-vent`).value;
+
+            db.collection('hospitals').doc(hospitalId).update({
+                generalBeds: parseInt(newGen),
+                icuBeds: parseInt(newIcu),
+                ventilators: parseInt(newVent)
+            })
+                .then(() => {
+                    // We don't need to manually alert; the onSnapshot listener will immediately update the UI.
+                    console.log("Hospital updated successfully!");
+                })
+                .catch((error) => {
+                    console.error("Error updating hospital: ", error);
+                    alert("Failed to update. Are you logged in as an Admin?");
+                });
+        }
+
+        // Start listening when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            listenToHospitalUpdates();
+        });
+    </script>
+</body>
+
+</html>
