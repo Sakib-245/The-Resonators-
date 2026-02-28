@@ -1,5 +1,5 @@
 # The-Resonators-
-Gemini said
+
 City Emergency Health Hub
 A real-time emergency response platform connecting patients, hospitals, and ambulances with live bed tracking, SOS GPS routing, and a community broadcast system.
 
