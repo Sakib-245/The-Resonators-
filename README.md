@@ -18,7 +18,7 @@ Patient Portal: One-click SOS with live GPS tracking, medical profile storage, a
 
 Admin Portal: Live inventory (beds/ventilators) updating, flashing SOS alerts that auto-reserve beds, and direct ambulance chat.
 
-Ambulance Cockpit: Incoming dispatch alerts with patient medical history, live Leaflet routing to the pickup point, and animated ECG/vitals syncing.
+Ambulance Cockpit: Incoming dispatch alerts with patient medical history, live Leaflet routing to the pickup point, and animated ECG/vitals syncing
 
 Tech Stack
 Built using HTML5, Tailwind CSS, Firebase (Auth & Real-time Firestore), Leaflet.js (OSRM routing), Chart.js, and the Web Speech API.
