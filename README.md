@@ -1,6 +1,6 @@
 # The-Resonators-
 
-City Emergency Health Hub
+City Emergency Health Hub.
 A real-time emergency response platform connecting patients, hospitals, and ambulances with live bed tracking, SOS GPS routing, and a community broadcast system.
 
 Strict Role-Based Access
