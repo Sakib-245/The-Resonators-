@@ -12,6 +12,7 @@ Public/Patients: Open access to find beds and trigger SOS.(ffor judges)
 Hospital Admins: Restricted panel for authorized staff to manage bed inventory and receive SOS alerts.
 
 Ambulance Drivers: Restricted tactical cockpit for designated drivers to accept dispatches and transmit vitals.
+
 (Ambulance and Hospital won't be visible to judges cause of ristrticeted access to them.)
 
 Core Features by Role
