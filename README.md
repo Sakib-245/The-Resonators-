@@ -21,5 +21,5 @@ Admin Portal: Live inventory (beds/ventilators) updating, flashing SOS alerts th
 Ambulance Cockpit: Incoming dispatch alerts with patient medical history, live Leaflet routing to the pickup point, and animated ECG/vitals syncing
 
 Tech Stack
-Built using HTML5, Tailwind CSS, Firebase (Auth & Real-time Firestore), Leaflet.js (OSRM routing), Chart.js, and the Web Speech API.
+Built using HTML5, Tailwind CSS, Firebase (Auth & Real-time Firestore), Leaflet.js (OSRM routing), Chart.js, and the Web Speech API. This allows us to efficiently build an web app for all 3 and have a seamless interaction between them. 
 ![WhatsApp Image 2026-02-28 at 10 48 15 AM](https://github.com/user-attachments/assets/d6d4c0d3-24d5-4c84-aa57-dc5b358778f8)
